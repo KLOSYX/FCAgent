@@ -28,7 +28,7 @@ prompt = PromptTemplate(
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | OpenAI(temperature=.7) | parser
+    chain = prompt | OpenAI(temperature=0) | parser
     return chain
 
 
@@ -48,5 +48,5 @@ if __name__ == '__main__':
         chain.invoke({
             'text_input': 'NASA has just discovered a new planet in the Andromeda galaxy',
             'image_caption': 'Hello world!',
-        }),
+        }).knowledges,
     )
