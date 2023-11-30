@@ -12,6 +12,7 @@ from PIL import Image
 from config import Config
 from fact_checker import get_fact_checker_chain
 from retriever import get_closed_knowledge_chain
+from retriever import get_qga_chain
 
 load_dotenv()
 config = Config()
@@ -28,6 +29,15 @@ def get_core_result(text: str, image: Image) -> dict:
         urljoin(config.core_server_addr, '/core'), data=params,
     )
     # 获取响应结果
+    result = response.json()
+    return result
+
+
+def get_wiki_result(key_words: str) -> dict:
+    params = {'key_words': key_words}
+    response = requests.post(
+        urljoin(config.core_server_addr, '/wiki'), data=params,
+    )
     result = response.json()
     return result
 
@@ -63,6 +73,13 @@ def inference(raw_image, claim):
         },
     ).knowledges
     history += stage2 + '\n' + list_to_markdown(closed_knowledge) + '\n'
+    key_words = get_qga_chain().invoke({'text_input': claim, 'image_caption': 'Not provided'})[-1].replace(
+        'query: ',
+        '',
+    )
+    wiki_knowledge: list[dict] = get_wiki_result(key_words)
+    history += f'> keywords: {key_words}\n' + \
+        list_to_markdown(wiki_knowledge) + '\n'
     yield history
 
     # LLM事实核查 TODO
@@ -71,7 +88,8 @@ def inference(raw_image, claim):
     result = fact_checker.invoke({
         'claim': claim,
         'image_caption': 'Not provided.',
-        'knowledge': closed_knowledge,
+        'ai_knowledge': closed_knowledge,
+        'wiki_knowledge': wiki_knowledge,
         'fake_prob': '{:.0%}'.format(core_result['fake_prob']),
         'real_prob': '{:.0%}'.format(core_result['real_prob']),
     })

@@ -11,9 +11,11 @@ __all__ = ['get_fact_checker_chain']
 
 class FactChecker(BaseModel):
     conclusion: str = Field(
-        "The truthfulness of the tweet, could be 'real'/'fake'.")
+        "The truthfulness of the tweet, could be 'real'/'fake'.",
+    )
     reason: str = Field(
-        'Why the tweet is real/fake. Output in Markdown format.')
+        'Explain why the tweet is real/fake. Output in Markdown format.',
+    )
 
 
 parser = PydanticOutputParser(pydantic_object=FactChecker)
@@ -28,7 +30,9 @@ tweet text: {claim}
 
 tweet image caption: {image_caption}
 
-knowledge: {knowledge}
+AI knowledge: {ai_knowledge}
+
+WiKi knowledge: {wiki_knowledge}
 
 {format_instruction}
 
@@ -36,10 +40,13 @@ output:"""
 
 prompt = PromptTemplate(
     template=template,
-    input_variables=['claim', 'image_caption',
-                     'knowledge', 'real_prob', 'fake_prob'],
+    input_variables=[
+        'claim', 'image_caption',
+        'ai_knowledge', 'wiki_knowledge', 'real_prob', 'fake_prob',
+    ],
     partial_variables={
-        'format_instruction': parser.get_format_instructions() + '请用中文回答。'},
+        'format_instruction': parser.get_format_instructions() + 'Please answer in Chinese.',
+    },
 )
 
 
