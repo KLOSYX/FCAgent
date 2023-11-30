@@ -11,7 +11,7 @@ from PIL import Image
 
 from config import Config
 from fact_checker import get_fact_checker_chain
-from retriever.closed_book_knowledge import get_closed_knowledge_chain
+from retriever import get_closed_knowledge_chain
 
 load_dotenv()
 config = Config()
@@ -25,7 +25,8 @@ def get_core_result(text: str, image: Image) -> dict:
     params = {'image': image_data, 'text': text}
     # 发送POST请求
     response = requests.post(
-        urljoin(config.core_server_addr, '/core'), data=params)
+        urljoin(config.core_server_addr, '/core'), data=params,
+    )
     # 获取响应结果
     result = response.json()
     return result
@@ -90,5 +91,7 @@ if __name__ == '__main__':
     description = 'fcsys'
     article = 'fcsys'
 
-    gr.Interface(inference, inputs, outputs, title=title,
-                 description=description, article=article).launch()
+    gr.Interface(
+        inference, inputs, outputs, title=title,
+        description=description, article=article,
+    ).launch()
