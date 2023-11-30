@@ -1,35 +1,30 @@
+from __future__ import annotations
+
 from langchain.llms import OpenAI
-from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 from langchain.output_parsers import MarkdownListOutputParser
-
-
-# class Query(BaseModel):
-#     reason: str = Field(description="The reasoning process for generating queries")
-#     query: str = Field(description="Queries separated by commas")
-#
-#
-# parser = PydanticOutputParser(pydantic_object=Query)
+from langchain.prompts import FewShotPromptTemplate
+from langchain.prompts import PromptTemplate
 
 examples = [
     {
-        "text": "See, I was right! You gotta watch out for these things. They're everywhere @ mindblowing on the road in NJ #sandy",
-        "image_caption": "A shark fin is seen rising above the water next to a car.",
-        "reason": "The text mentions an event in New Jersey during Hurricane Sandy. The image shows a shark swimming on a road, which is suspicious and possibly doctored. It may not have happened at the mentioned location.",
-        "query": "shark photographed swimming on road, New Jersey, Hurricane Sandy"
-    }
+        'text': "See, I was right! You gotta watch out for these things. They're everywhere @ mindblowing on the road in NJ #sandy",
+        'image_caption': 'A shark fin is seen rising above the water next to a car.',
+        'reason': 'The text mentions an event in New Jersey during Hurricane Sandy. The image shows a shark swimming on a road, which is suspicious and possibly doctored. It may not have happened at the mentioned location.',
+        'query': 'shark photographed swimming on road, New Jersey, Hurricane Sandy',
+    },
 ]
 
 example_template = """
-Input: 
+Input:
     - text: {text}
     - image_caption: {image_caption}
-Ouput: 
+Ouput:
     - reason: {reason}
     - query: {query}
 """
 
 example_prompt = PromptTemplate(
-    input_variables=["text", "image_caption", "reason", "query"],
+    input_variables=['text', 'image_caption', 'reason', 'query'],
     template=example_template,
 )
 
@@ -43,7 +38,7 @@ Example:
 
 suffix = """
 ---
-Input: 
+Input:
     - text: {text_input}
     - image_caption: {image_caption}
 Output:"""
@@ -53,8 +48,8 @@ prompt = FewShotPromptTemplate(
     example_prompt=example_prompt,
     prefix=prefix,
     suffix=suffix,
-    input_variables=["text_input", "image_caption"],
-    example_separator="\n\n",
+    input_variables=['text_input', 'image_caption'],
+    example_separator='\n\n',
 )
 
 
@@ -63,13 +58,18 @@ def get_qga_chain():
     return chain
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     from pyrootutils import setup_root
     from dotenv import load_dotenv
 
-    root = setup_root(".")
+    root = setup_root('.')
     load_dotenv()
 
     # print(prompt.invoke({"text_input": "Hello world!", "image_caption": "Hello world!"}))
     chain = get_qga_chain()
-    print(chain.invoke({"text_input": "Hello world!", "image_caption": "Hello world!"}))
+    print(
+        chain.invoke({
+            'text_input': 'Hello world!',
+            'image_caption': 'Hello world!',
+        }),
+    )
