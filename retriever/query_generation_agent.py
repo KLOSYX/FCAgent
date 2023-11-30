@@ -29,15 +29,11 @@ example_prompt = PromptTemplate(
 )
 
 prefix = """Imagine you're an AI tasked with verifying the authenticity of a social media tweet. Your input is the tweet's text and image caption. Your job is to extract crucial information from the tweet (like time, location, people, and key entities) and use this information to generate a search engine query. This query will help verify the tweet's authenticity.
-
 Identify which pieces of information are most likely to contradict known facts. Separate different pieces of key information with commas.
+Example:"""
 
+suffix = """---
 
-Example:
-"""
-
-suffix = """
----
 Input:
     - text: {text_input}
     - image_caption: {image_caption}
@@ -60,16 +56,15 @@ def get_qga_chain():
 
 if __name__ == '__main__':
     from pyrootutils import setup_root
-    from dotenv import load_dotenv
 
-    root = setup_root('.')
-    load_dotenv()
+    root = setup_root('.', dotenv=True)
 
-    # print(prompt.invoke({"text_input": "Hello world!", "image_caption": "Hello world!"}))
+    print(prompt.invoke({'text_input': 'Hello world!',
+          'image_caption': 'Hello world!'}).text)
     chain = get_qga_chain()
     print(
         chain.invoke({
-            'text_input': 'Hello world!',
-            'image_caption': 'Hello world!',
+            'text_input': 'NASA has just discovered a new planet in the Andromeda galaxy',
+            'image_caption': 'Not provided.',
         }),
     )
