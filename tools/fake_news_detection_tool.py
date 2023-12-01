@@ -32,9 +32,10 @@ def load_tweet_content() -> dict:
 
 
 class FakeNewsDetectionTool(BaseTool):
-    name = 'fake news detection tool'
+    name = 'Fake News Detection Tool'
     description = (
-        'use this tool to get machine learning model prediction whether a tweet is true/false.'
+        'use this tool to get machine learning model prediction whether a tweet is true/false. '
+        'CANNOT be used as the only indicator. '
         'use the tweet text summary as input.'
     )
 

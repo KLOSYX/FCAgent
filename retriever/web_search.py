@@ -12,7 +12,7 @@ def get_web_searcher():
 
 
 class WebSearchTool(BaseTool):
-    name = 'web search tool'
+    name = 'Web Search Tool'
     description = 'use this tool when you need to search web page. the query could be in English or Chinese.'
 
     def _run(self, query: str) -> str:

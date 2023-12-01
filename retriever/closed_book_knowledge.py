@@ -36,10 +36,10 @@ def get_closed_knowledge_chain():
 
 
 class ClosedBookTool(BaseTool):
-    name = 'closed book knowledge tool'
+    name = 'Closed Book Knowledge Tool'
     description = (
-        'Use this tool when you need to search for knowledge within ChatGPT, '
-        'note that the knowledge you get is relatively unreliable but will be more on topic.'
+        'use this tool when you need to search for knowledge within ChatGPT, '
+        'note that the knowledge you get is relatively unreliable but will be more specific.'
     )
 
     def _run(self, query: str) -> list[str]:
