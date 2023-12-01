@@ -13,9 +13,10 @@ def get_web_searcher():
 
 class WebSearchTool(BaseTool):
     name = 'web search tool'
-    description = 'use this tool when you need to search web page. note that results might be fake.'
+    description = 'use this tool when you need to search web page. the query could be in English or Chinese.'
 
     def _run(self, query: str) -> str:
+        """use string 'query' as input. could be any language."""
         return get_web_searcher().run(query)
 
     def _arun(self, query: str) -> list[str]:

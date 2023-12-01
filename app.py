@@ -42,8 +42,7 @@ def inference(raw_image: None | Image, claim: None | str):
         )
     agent = get_fact_checker_agent()
     response = agent.stream(
-        {'tweet_text': claim, 'tweet_image_path': str(
-            tmp_dir / 'tweet_content.json')},
+        {'tweet_text': claim},
     )
     partial_message = ''
     for chunk in response:

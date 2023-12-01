@@ -35,10 +35,11 @@ class FakeNewsDetectionTool(BaseTool):
     name = 'fake news detection tool'
     description = (
         'use this tool to get machine learning model prediction whether a tweet is true/false.'
-        'use the tweet summary as input.'
+        'use the tweet text summary as input.'
     )
 
-    def _run(self, tweet_summary: str) -> str:
+    def _run(self, tweet_text_summary: str) -> str:
+        """use tweet summary as input. could be in English and Chinese."""
         tweet_content = load_tweet_content()
         return get_core_result(text=tweet_content['tweet_text'], image=tweet_content['tweet_image'])
 
