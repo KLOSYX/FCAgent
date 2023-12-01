@@ -21,8 +21,9 @@ def get_wiki_result(key_words: str) -> list[str]:
 
 class WikipediaTool(BaseTool):
     name = 'Wikipedia tool'
-    description = 'use this tool when you need to retrieve knowledge from Wikipedia. \
-                    Note that knowledge may be out of date, but it is certainly correct.'
+    description = ('use this tool when you need to retrieve knowledge from Wikipedia. \
+                    note that knowledge may be out of date, but it is certainly correct. \
+                   the query must be English.')
 
     def _run(self, query: str) -> list[str]:
         return get_wiki_result(key_words=query)
