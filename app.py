@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import base64
+import json
+from io import BytesIO
+
 import gradio as gr
 from PIL import Image
 from pyrootutils import setup_root
@@ -24,10 +28,22 @@ def inference(raw_image: None | Image, claim: None | str):
     tmp_dir = root / '.temp'
     if not tmp_dir.exists():
         tmp_dir.mkdir(parents=True)
-    raw_image.save(tmp_dir / 'image.png')
+    buffer = BytesIO()
+    raw_image.save(buffer, format='JPEG')
+    image_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    with open(tmp_dir / 'tweet_content.json', 'w') as f:
+        f.write(
+            json.dumps(
+                {
+                    'tweet_text': claim,
+                    'tweet_image': image_data,
+                }, ensure_ascii=False,
+            ),
+        )
     agent = get_fact_checker_agent()
     response = agent.stream(
-        {'tweet_text': claim, 'tweet_image_path': str(tmp_dir / 'image.png')},
+        {'tweet_text': claim, 'tweet_image_path': str(
+            tmp_dir / 'tweet_content.json')},
     )
     partial_message = ''
     for chunk in response:
