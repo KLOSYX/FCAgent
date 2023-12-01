@@ -1,5 +1,7 @@
-duckduckgo-search~=3.9.9
-gradio~=4.7.1
-langchain~=0.0.342
-
-python-dotenv~=0.21.0
+duckduckgo-search==3.9.9
+gradio==4.7.1
+langchain==0.0.342
+Pillow==10.1.0
+pydantic==2.5.2
+pyrootutils==1.0.4
+requests==2.31.0
