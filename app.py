@@ -1,23 +1,11 @@
 from __future__ import annotations
 
-import base64
-from io import BytesIO
-from shutil import rmtree
-from urllib.parse import urljoin
-
 import gradio as gr
-import requests
 from PIL import Image
 from pyrootutils import setup_root
 
 from config import Config
 from fact_checker import get_fact_checker_agent
-from fact_checker import get_fact_checker_chain
-from retriever import get_closed_knowledge_chain
-from retriever import get_qga_chain
-from retriever import get_web_searcher
-from retriever import get_wiki_result
-from retriever import WebSearchTool
 
 root = setup_root('.', pythonpath=True, dotenv=True)
 config = Config()
@@ -44,7 +32,7 @@ def inference(raw_image: None | Image, claim: None | str):
     partial_message = ''
     for chunk in response:
         partial_message = partial_message + \
-                          '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
+            '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
         message_list = [
             msg for msg in partial_message.replace(
                 '\n\n', '\n',
