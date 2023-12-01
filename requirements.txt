@@ -1,3 +1,4 @@
+duckduckgo-search~=3.9.9
 gradio~=4.7.1
 langchain~=0.0.342
 

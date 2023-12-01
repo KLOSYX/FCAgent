@@ -59,8 +59,12 @@ if __name__ == '__main__':
 
     root = setup_root('.', dotenv=True)
 
-    print(prompt.invoke({'text_input': 'Hello world!',
-          'image_caption': 'Hello world!'}).text)
+    print(
+        prompt.invoke({
+            'text_input': 'Hello world!',
+            'image_caption': 'Hello world!',
+        }).text,
+    )
     chain = get_qga_chain()
     print(
         chain.invoke({
