@@ -2,19 +2,21 @@ from __future__ import annotations
 
 from langchain.agents import AgentType
 from langchain.agents import initialize_agent
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.tools import StructuredTool
 from pydantic import BaseModel
 from pydantic import Field
 
+from config import Config
 from retriever import ClosedBookTool
 from retriever import WebSearchTool
 from retriever import WikipediaTool
 from tools import FakeNewsDetectionTool
 
 __all__ = ['get_fact_checker_chain']
+config = Config()
 
 
 class FactChecker(BaseModel):
@@ -61,21 +63,18 @@ prompt = PromptTemplate(
 
 
 def get_fact_checker_chain():
-    chain = prompt | OpenAI(temperature=.7) | parser
+    chain = prompt | ChatOpenAI(
+        temperature=.7, model_name=config.model_name) | parser
     return chain
 
 
-agent_template = """You are a professional fact checker. Given the following tweet text and tweet image path, \
-                    please judge whether the tweet is true or false and give detailed reasons.
-                    ---
+agent_template = """You are a professional fact checker. Given the following tweet text, \
+                    please judge whether the tweet is true or false and give your reasons step by step.
                     tweet text: {tweet_text}
-
-                    tweet image path: {tweet_image_path}
-
                     """
 
 agent_prompt = PromptTemplate(
-    input_variables=['tweet_text', 'tweet_image_path'],
+    input_variables=['tweet_text'],
     template=agent_template,
 )
 
@@ -85,7 +84,7 @@ def get_fact_checker_agent():
         ClosedBookTool(), WikipediaTool(), WebSearchTool(),
         FakeNewsDetectionTool(),
     ]
-    llm = OpenAI(temperature=.7)
+    llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
     agent = initialize_agent(
         tools,
         llm,
