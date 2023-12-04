@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from langchain.agents import AgentType
 from langchain.agents import initialize_agent
 from langchain.chat_models import ChatOpenAI
@@ -30,7 +32,11 @@ class FactChecker(BaseModel):
 
 parser = PydanticOutputParser(pydantic_object=FactChecker)
 
-template = """You are a fact-checking expert. Now I give you the content of a tweet (including the text as well as the caption of the image), and the probability that the tweet is true/false predicted by AI model, and some knowledge that may be relevant to determining whether the tweet is true or false (note that this knowledge may be irrelevant or false, and that you can't fully trust it); you need to give a conclusion as to the truthfulness of the tweet, and a reason for it, based on this information.
+template = """You are a fact-checking expert. Now I give you the content of a tweet (including the text as well as the \
+caption of the image), and the probability that the tweet is true/false predicted by AI model, and some knowledge that \
+may be relevant to determining whether the tweet is true or false (note that this knowledge may be irrelevant or false,\
+ and that you can't fully trust it); you need to give a conclusion as to the truthfulness of the tweet, and a reason \
+ for it, based on this information. today is {time}.
 
 real probability predicted by AI model: {real_prob}
 
@@ -58,6 +64,7 @@ prompt = PromptTemplate(
     ],
     partial_variables={
         'format_instruction': parser.get_format_instructions(),
+        'time': datetime.now().strftime('%Y-%m-%d'),
     },
 )
 
