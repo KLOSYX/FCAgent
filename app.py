@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from io import BytesIO
+from typing import Any
 
 import gradio as gr
 from PIL import Image
@@ -22,7 +23,7 @@ def list_to_markdown(lst):
     return markdown
 
 
-def inference(raw_image: None | Image, claim: None | str):
+def inference(raw_image: Any, claim: str):
     if not raw_image or not claim:
         return '图像和文本不能为空！'
     tmp_dir = root / '.temp'

@@ -14,7 +14,10 @@ class ClosedBookKnowledge(BaseModel):
 
 parser = PydanticOutputParser(pydantic_object=ClosedBookKnowledge)
 
-template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want to verify the authenticity of the tweet and you are responsible for providing knowledge that can support/refute the content of the tweet. The knowledge must be true and reliable, so if you don't have the relevant knowledge, please don't provide it.
+template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want \
+to verify the authenticity of the tweet and you are responsible for providing knowledge that can support/refute the \
+content of the tweet. The knowledge must be true and reliable, so if you don't have the relevant knowledge, please \
+don't provide it.
 {format_template}
 ---
 text: {text_input}
