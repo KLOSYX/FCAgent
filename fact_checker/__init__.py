@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from langchain.agents import AgentType
 from langchain.agents import initialize_agent
 from langchain.chat_models import ChatOpenAI
@@ -14,8 +16,9 @@ from retriever import ClosedBookTool
 from retriever import WebSearchTool
 from retriever import WikipediaTool
 from tools import FakeNewsDetectionTool
+from tools import ImageComprehendingTool
 
-__all__ = ['get_fact_checker_chain']
+__all__ = ['get_fact_checker_agent']
 config = Config()
 
 
@@ -30,7 +33,11 @@ class FactChecker(BaseModel):
 
 parser = PydanticOutputParser(pydantic_object=FactChecker)
 
-template = """You are a fact-checking expert. Now I give you the content of a tweet (including the text as well as the caption of the image), and the probability that the tweet is true/false predicted by AI model, and some knowledge that may be relevant to determining whether the tweet is true or false (note that this knowledge may be irrelevant or false, and that you can't fully trust it); you need to give a conclusion as to the truthfulness of the tweet, and a reason for it, based on this information.
+template = """You are a fact-checking expert. Now I give you the content of a tweet (including the text as well as the \
+caption of the image), and the probability that the tweet is true/false predicted by AI model, and some knowledge that \
+may be relevant to determining whether the tweet is true or false (note that this knowledge may be irrelevant or false,\
+ and that you can't fully trust it); you need to give a conclusion as to the truthfulness of the tweet, and a reason \
+ for it, based on this information. today is {time}.
 
 real probability predicted by AI model: {real_prob}
 
@@ -58,23 +65,26 @@ prompt = PromptTemplate(
     ],
     partial_variables={
         'format_instruction': parser.get_format_instructions(),
+        'time': datetime.now().strftime('%Y-%m-%d'),
     },
 )
 
 
 def get_fact_checker_chain():
     chain = prompt | ChatOpenAI(
-        temperature=.7, model_name=config.model_name) | parser
+        temperature=.7, model_name=config.model_name,
+    ) | parser
     return chain
 
 
 agent_template = """You are a professional fact checker. Given the following tweet text, \
                     please judge whether the tweet is true or false and give your reasons step by step.
                     tweet text: {tweet_text}
+                    tweet image path: {tweet_image_path}
                     """
 
 agent_prompt = PromptTemplate(
-    input_variables=['tweet_text'],
+    input_variables=['tweet_text', 'tweet_image_path'],
     template=agent_template,
 )
 
@@ -82,7 +92,7 @@ agent_prompt = PromptTemplate(
 def get_fact_checker_agent():
     tools = [
         ClosedBookTool(), WikipediaTool(), WebSearchTool(),
-        FakeNewsDetectionTool(),
+        FakeNewsDetectionTool(), ImageComprehendingTool(),
     ]
     llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
     agent = initialize_agent(

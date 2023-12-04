@@ -12,17 +12,19 @@ from config import Config
 config = Config()
 root = setup_root('.')
 
+template = """"Please provide a brief description of the image content and textual information."""
 
-def get_core_result(text: str, image: str) -> str:
+
+def get_vl_result(image: str) -> str:
     # 构造请求参数
-    params = {'image': image, 'text': text}
+    params = {'image': image, 'text': template}
     # 发送POST请求
     response = requests.post(
-        urljoin(config.core_server_addr, '/core'), data=params,
+        urljoin(config.vl_server_addr, '/vl'), data=params,
     )
     # 获取响应结果
-    result = response.json()
-    return f"fake probability: {result['fake_prob']:.0%}\treal probability: {result['real_prob']:.0%}"
+    result = response.text
+    return result
 
 
 def load_tweet_content() -> dict:
@@ -31,18 +33,16 @@ def load_tweet_content() -> dict:
     return tweet_content
 
 
-class FakeNewsDetectionTool(BaseTool):
-    name = 'fnd_tool'
+class ImageComprehendingTool(BaseTool):
+    name = 'image_comprehending_tool'
     description = (
-        'use this tool to get machine learning model prediction whether a tweet is true/false. '
-        'CANNOT be used as the only indicator. '
-        'use the tweet text summary as input.'
+        'Use this tool to obtain text descriptions of tweet image content'
     )
 
     def _run(self, tweet_text_summary: str) -> str:
         """use tweet summary as input. could be in English and Chinese."""
         tweet_content = load_tweet_content()
-        return get_core_result(text=tweet_content['tweet_text'], image=tweet_content['tweet_image'])
+        return get_vl_result(tweet_content['tweet_image'])
 
     def _arun(self, tweet_summary: str) -> list[str]:
         raise NotImplementedError('This tool does not support async')
