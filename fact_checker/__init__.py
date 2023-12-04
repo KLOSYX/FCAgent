@@ -16,8 +16,9 @@ from retriever import ClosedBookTool
 from retriever import WebSearchTool
 from retriever import WikipediaTool
 from tools import FakeNewsDetectionTool
+from tools import ImageComprehendingTool
 
-__all__ = ['get_fact_checker_chain']
+__all__ = ['get_fact_checker_agent']
 config = Config()
 
 
@@ -79,10 +80,11 @@ def get_fact_checker_chain():
 agent_template = """You are a professional fact checker. Given the following tweet text, \
                     please judge whether the tweet is true or false and give your reasons step by step.
                     tweet text: {tweet_text}
+                    tweet image path: {tweet_image_path}
                     """
 
 agent_prompt = PromptTemplate(
-    input_variables=['tweet_text'],
+    input_variables=['tweet_text', 'tweet_image_path'],
     template=agent_template,
 )
 
@@ -90,7 +92,7 @@ agent_prompt = PromptTemplate(
 def get_fact_checker_agent():
     tools = [
         ClosedBookTool(), WikipediaTool(), WebSearchTool(),
-        FakeNewsDetectionTool(),
+        FakeNewsDetectionTool(), ImageComprehendingTool(),
     ]
     llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
     agent = initialize_agent(
