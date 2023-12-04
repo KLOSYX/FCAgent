@@ -18,14 +18,11 @@ template = """Please now play the role of an encyclopaedic knowledge base, I wil
 {format_template}
 ---
 text: {text_input}
-image caption: {image_caption}
-real probability: {real_prob}
-fake probability: {fake_prob}
 output: """
 
 prompt = PromptTemplate(
     template=template,
-    input_variables=['text_input', 'image_caption', 'real_prob', 'fake_prob'],
+    input_variables=['text_input'],
     partial_variables={'format_template': parser.get_format_instructions()},
 )
 
@@ -57,17 +54,11 @@ if __name__ == '__main__':
     print(
         prompt.invoke({
             'text_input': 'NASA has just discovered a new planet in the Andromeda galaxy',
-            'image_caption': 'Hello world!',
-            'fake_prob': 1,
-            'real_prob': 0,
         }).text,
     )
     chain = get_closed_knowledge_chain()
     print(
         chain.invoke({
             'text_input': 'NASA has just discovered a new planet in the Andromeda galaxy',
-            'image_caption': 'Hello world!',
-            'fake_prob': 1,
-            'real_prob': 0,
         }).knowledges,
     )

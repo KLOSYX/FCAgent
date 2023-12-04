@@ -64,7 +64,8 @@ prompt = PromptTemplate(
 
 def get_fact_checker_chain():
     chain = prompt | ChatOpenAI(
-        temperature=.7, model_name=config.model_name) | parser
+        temperature=.7, model_name=config.model_name,
+    ) | parser
     return chain
 
 
