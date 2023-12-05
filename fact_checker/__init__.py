@@ -95,8 +95,11 @@ agent_prompt = PromptTemplate(
 
 def get_fact_checker_agent():
     tools = [
-        ClosedBookTool(), WikipediaTool(), WebSearchTool(),
-        FakeNewsDetectionTool(), ImageComprehendingTool(),
+        ClosedBookTool(),
+        WikipediaTool(),
+        WebSearchTool(),
+        FakeNewsDetectionTool(),
+        ImageComprehendingTool(),
     ]
     llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
     prompt = hub.pull('hwchase17/react-json')

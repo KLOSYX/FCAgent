@@ -2,12 +2,22 @@ from __future__ import annotations
 
 from langchain.tools import BaseTool
 from langchain.tools import DuckDuckGoSearchResults
+from langchain.tools import GoogleSearchResults
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
+from langchain.utilities import GoogleSearchAPIWrapper
+
+from config import Config
+
+config = Config()
 
 
 def get_web_searcher():
-    wrapper = DuckDuckGoSearchAPIWrapper(max_results=5)
-    web_search = DuckDuckGoSearchResults(api_wrapper=wrapper)
+    if config.search_engine == 'duckduckgo':
+        wrapper = DuckDuckGoSearchAPIWrapper(max_results=5)
+        web_search = DuckDuckGoSearchResults(api_wrapper=wrapper)
+    else:
+        wrapper = GoogleSearchAPIWrapper(k=5)
+        web_search = GoogleSearchResults(api_wrapper=wrapper)
     return web_search
 
 
