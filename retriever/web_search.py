@@ -13,11 +13,14 @@ def get_web_searcher():
 
 class WebSearchTool(BaseTool):
     name = 'web_search_tool'
-    description = 'use this tool when you need to search web page. the query could be in English or Chinese.'
+    description = (
+        'use this tool when you need to search web page. the query could be in English or Chinese.'
+        'use parameter `query` as input.'
+    )
 
     def _run(self, query: str) -> str:
         """use string 'query' as input. could be any language."""
-        return get_web_searcher().run(query)
+        return get_web_searcher().run(query) + '\n'
 
     def _arun(self, query: str) -> list[str]:
         raise NotImplementedError('This tool does not support async')

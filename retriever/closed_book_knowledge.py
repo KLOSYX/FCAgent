@@ -40,10 +40,13 @@ class ClosedBookTool(BaseTool):
     description = (
         'use this tool when you need to search for knowledge within ChatGPT, '
         'note that the knowledge you get is relatively unreliable but will be more specific.'
+        'use parameter `query` as input.'
     )
 
-    def _run(self, query: str) -> list[str]:
-        return get_closed_knowledge_chain().invoke({'text_input': query}).knowledges
+    def _run(self, query: str):
+        return '\n'.join(
+            f'{i}. {s}' for i, s in enumerate(get_closed_knowledge_chain().invoke({'text_input': query}))
+        ) + '\n'
 
     def _arun(self, query: str) -> list[str]:
         raise NotImplementedError('This tool does not support async')

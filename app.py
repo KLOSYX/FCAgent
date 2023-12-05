@@ -52,12 +52,7 @@ def inference(raw_image: Any, claim: str):
     for chunk in response:
         partial_message = partial_message + \
             '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
-        message_list = [
-            msg for msg in partial_message.replace(
-                '\n\n', '\n',
-            ).split('\n') if msg.strip()
-        ]
-        yield list_to_markdown(message_list)
+        yield partial_message
 
 
 if __name__ == '__main__':
@@ -65,7 +60,7 @@ if __name__ == '__main__':
         gr.Image(type='pil', interactive=True, label='Image'),
         gr.Textbox(lines=2, label='Claim', interactive=True),
     ]
-    outputs = gr.Markdown(label='输出')
+    outputs = gr.Markdown(label='输出', sanitize_html=False)
 
     title = 'fcsys'
     description = 'fcsys'
