@@ -16,10 +16,8 @@ from tools import TOOL_LIST
 root = setup_root('.', pythonpath=True, dotenv=True)
 config = Config()
 
-tools = [x() for x in TOOL_LIST]
-retrievers = [x() for x in RETRIEVER_LIST]
-tool_map = {x.name: x for x in tools}
-retriever_map = {x.name: x for x in retrievers}
+tool_map = {x.name: x for x in TOOL_LIST}
+retriever_map = {x.name: x for x in RETRIEVER_LIST}
 
 
 def list_to_markdown(lst):
