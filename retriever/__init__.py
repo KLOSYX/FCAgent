@@ -17,7 +17,7 @@ from .wiki_knowledge import get_wiki_result, WikipediaTool
 from .web_search import get_web_searcher, WebSearchTool
 
 RETRIEVER_LIST = [
-    ClosedBookTool,
-    WikipediaTool,
-    WebSearchTool,
+    ClosedBookTool(),
+    WikipediaTool(),
+    WebSearchTool(),
 ]
