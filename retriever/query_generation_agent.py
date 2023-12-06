@@ -7,9 +7,11 @@ from langchain.prompts import PromptTemplate
 
 examples = [
     {
-        'text': "See, I was right! You gotta watch out for these things. They're everywhere @ mindblowing on the road in NJ #sandy",
+        'text': "See, I was right! You gotta watch out for these things. They're everywhere @ mindblowing on the road \
+        in NJ #sandy",
         'image_caption': 'A shark fin is seen rising above the water next to a car.',
-        'reason': 'The text mentions an event in New Jersey during Hurricane Sandy. The image shows a shark swimming on a road, which is suspicious and possibly doctored. It may not have happened at the mentioned location.',
+        'reason': 'The text mentions an event in New Jersey during Hurricane Sandy. The image shows a shark swimming \
+        on a road, which is suspicious and possibly doctored. It may not have happened at the mentioned location.',
         'query': 'shark photographed swimming on road, New Jersey, Hurricane Sandy',
     },
 ]
@@ -28,8 +30,12 @@ example_prompt = PromptTemplate(
     template=example_template,
 )
 
-prefix = """Imagine you're an AI tasked with verifying the authenticity of a social media tweet. Your input is the tweet's text and image caption. Your job is to extract crucial information from the tweet (like time, location, people, and key entities) and use this information to generate a search engine query. This query will help verify the tweet's authenticity.
-Identify which pieces of information are most likely to contradict known facts. Separate different pieces of key information with commas.
+prefix = """Imagine you're an AI tasked with verifying the authenticity of a social media tweet. Your input is the \
+tweet's text and image caption. Your job is to extract crucial information from the tweet (like time, location, people,\
+and key entities) and use this information to generate a search engine query. This query will help verify the tweet's \
+authenticity.
+Identify which pieces of information are most likely to contradict known facts. Separate different pieces of key \
+information with commas.
 Example:"""
 
 suffix = """---

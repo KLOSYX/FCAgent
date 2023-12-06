@@ -2,21 +2,18 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from langchain.agents import AgentType
-from langchain.agents import initialize_agent
+from langchain import hub
+from langchain.agents import AgentExecutor
+from langchain.agents.format_scratchpad import format_log_to_str
+from langchain.agents.output_parsers import ReActJsonSingleInputOutputParser
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
-from langchain.tools import StructuredTool
+from langchain.tools.render import render_text_description
 from pydantic import BaseModel
 from pydantic import Field
 
 from config import Config
-from retriever import ClosedBookTool
-from retriever import WebSearchTool
-from retriever import WikipediaTool
-from tools import FakeNewsDetectionTool
-from tools import ImageComprehendingTool
 
 __all__ = ['get_fact_checker_agent']
 config = Config()
@@ -57,7 +54,7 @@ web knowledge: {web_knowledge}
 
 output:"""
 
-prompt = PromptTemplate(
+agent_prompt = PromptTemplate(
     template=template,
     input_variables=[
         'claim', 'image_caption',
@@ -71,17 +68,16 @@ prompt = PromptTemplate(
 
 
 def get_fact_checker_chain():
-    chain = prompt | ChatOpenAI(
+    chain = agent_prompt | ChatOpenAI(
         temperature=.7, model_name=config.model_name,
     ) | parser
     return chain
 
 
 agent_template = """You are a professional fact checker. Given the following tweet text, \
-                    please judge whether the tweet is true or false and give your reasons step by step.
-                    tweet text: {tweet_text}
-                    tweet image path: {tweet_image_path}
-                    """
+please judge whether the tweet is true or false and give your reasons step by step.
+tweet text: {tweet_text}
+tweet image path: {tweet_image_path}"""
 
 agent_prompt = PromptTemplate(
     input_variables=['tweet_text', 'tweet_image_path'],
@@ -89,18 +85,23 @@ agent_prompt = PromptTemplate(
 )
 
 
-def get_fact_checker_agent():
-    tools = [
-        ClosedBookTool(), WikipediaTool(), WebSearchTool(),
-        FakeNewsDetectionTool(), ImageComprehendingTool(),
-    ]
+def get_fact_checker_agent(tools):
     llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
-    agent = initialize_agent(
-        tools,
-        llm,
-        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-        verbose=True,
-        return_intermediate_steps=True,
+    prompt = hub.pull('hwchase17/react-json')
+    prompt = prompt.partial(
+        tools=render_text_description(tools),
+        tool_names=', '.join([t.name for t in tools]),
     )
-    chain = agent_prompt | agent
-    return chain
+    llm_with_stop = llm.bind(stop=['\nObservation'])
+    agent = (
+        {
+            'input': lambda x: x['input'],
+            'agent_scratchpad': lambda x: format_log_to_str(x['intermediate_steps']), }
+        | prompt
+        | llm_with_stop
+        | ReActJsonSingleInputOutputParser()
+    )
+    agent = agent_prompt | {'input': lambda x: x} | AgentExecutor(
+        agent=agent, tools=tools, verbose=True, handle_parsing_errors='Check your output and make sure it conforms!\n',
+    )
+    return agent
