@@ -65,18 +65,26 @@ def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_re
 
 if __name__ == '__main__':
     inputs = [
-        gr.Image(type='pil', interactive=True, label='Image'),
-        gr.Textbox(lines=2, label='Claim', interactive=True),
-        gr.Checkboxgroup(list(tool_map.keys()), value=list(
-            tool_map.keys()), label='Tools'),
-        gr.Checkboxgroup(list(retriever_map.keys()), value=list(
-            retriever_map.keys()), label='Retriever'),
+        gr.Image(type='pil', interactive=True, label='图像'),
+        gr.Textbox(lines=2, label='文本', interactive=True),
+        gr.Checkboxgroup(
+            list(tool_map.keys()), value=list(
+                tool_map.keys(),
+            ), label='工具选择',
+        ),
+        gr.Checkboxgroup(
+            list(retriever_map.keys()), value=list(
+                retriever_map.keys(),
+            ), label='知识库选择',
+        ),
     ]
     outputs = gr.Markdown(label='输出', sanitize_html=False)
 
-    title = 'fcsys'
-    description = 'fcsys'
-    article = 'fcsys'
+    title = 'FCAgent'
+    description = '该项目旨在提供一个基于大型语言模型(LLM)的代理，用于通过分析图像和文本内容来验证多模态社交媒体信息。\
+    它利用一套Python工具和AI模型来评估社交媒体信息的真实性，并理解与tweet关联的图像中的内容。\
+    该系统以模块化为重点构建，允许轻松扩展或修改其功能。'
+    article = 'FCAgent'
 
     gr.Interface(
         inference, inputs, outputs, title=title,
