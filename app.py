@@ -48,7 +48,7 @@ def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_re
             ),
         )
     all_tools = [tool_map[x] for x in selected_tools] + \
-        [retriever_map[x] for x in selected_retrievers]
+                [retriever_map[x] for x in selected_retrievers]
     agent = get_fact_checker_agent(all_tools)
     response = agent.stream(
         {
@@ -67,16 +67,25 @@ if __name__ == '__main__':
     inputs = [
         gr.Image(type='pil', interactive=True, label='Image'),
         gr.Textbox(lines=2, label='Claim', interactive=True),
-        gr.Checkboxgroup(list(tool_map.keys()), value=list(
-            tool_map.keys()), label='Tools'),
-        gr.Checkboxgroup(list(retriever_map.keys()), value=list(
-            retriever_map.keys()), label='Retriever'),
+        gr.Checkboxgroup(
+            list(tool_map.keys()), value=list(
+                tool_map.keys(),
+            ), label='Tools',
+        ),
+        gr.Checkboxgroup(
+            list(retriever_map.keys()), value=list(
+                retriever_map.keys(),
+            ), label='Retriever',
+        ),
     ]
-    outputs = gr.Markdown(label='输出', sanitize_html=False)
+    outputs = gr.Markdown(label='Output', sanitize_html=False)
 
-    title = 'fcsys'
-    description = 'fcsys'
-    article = 'fcsys'
+    title = 'FCAgent'
+    description = 'This project is designed to provide a Large Language Model (LLM)-based agent for verifying \
+    multimodal social media posts by analyzing both image and text content. It leverages a suite of Python tools \
+    and models to assess the authenticity of tweets and comprehend the content within images associated with tweets. \
+    The system is built with a focus on modularity, allowing for easy expansion or modification of its capabilities.'
+    article = 'FCAgent'
 
     gr.Interface(
         inference, inputs, outputs, title=title,
