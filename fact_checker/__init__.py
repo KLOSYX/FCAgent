@@ -4,24 +4,16 @@ from datetime import datetime
 
 from langchain import hub
 from langchain.agents import AgentExecutor
-from langchain.agents import AgentType
-from langchain.agents import initialize_agent
 from langchain.agents.format_scratchpad import format_log_to_str
 from langchain.agents.output_parsers import ReActJsonSingleInputOutputParser
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
-from langchain.tools import StructuredTool
 from langchain.tools.render import render_text_description
 from pydantic import BaseModel
 from pydantic import Field
 
 from config import Config
-from retriever import ClosedBookTool
-from retriever import WebSearchTool
-from retriever import WikipediaTool
-from tools import FakeNewsDetectionTool
-from tools import ImageComprehendingTool
 
 __all__ = ['get_fact_checker_agent']
 config = Config()
@@ -96,14 +88,7 @@ agent_prompt = PromptTemplate(
 )
 
 
-def get_fact_checker_agent():
-    tools = [
-        ClosedBookTool(),
-        WikipediaTool(),
-        WebSearchTool(),
-        FakeNewsDetectionTool(),
-        ImageComprehendingTool(),
-    ]
+def get_fact_checker_agent(tools):
     llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
     prompt = hub.pull('hwchase17/react-json')
     prompt = prompt.partial(

@@ -6,14 +6,20 @@ from io import BytesIO
 from typing import Any
 
 import gradio as gr
-from PIL import Image
 from pyrootutils import setup_root
 
 from config import Config
 from fact_checker import get_fact_checker_agent
+from retriever import RETRIEVER_LIST
+from tools import TOOL_LIST
 
 root = setup_root('.', pythonpath=True, dotenv=True)
 config = Config()
+
+tools = [x() for x in TOOL_LIST]
+retrievers = [x() for x in RETRIEVER_LIST]
+tool_map = {x.name: x for x in tools}
+retriever_map = {x.name: x for x in retrievers}
 
 
 def list_to_markdown(lst):
@@ -23,7 +29,7 @@ def list_to_markdown(lst):
     return markdown
 
 
-def inference(raw_image: Any, claim: str):
+def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]):
     if not raw_image or not claim:
         return '图像和文本不能为空！'
     tmp_dir = root / '.temp'
@@ -41,7 +47,9 @@ def inference(raw_image: Any, claim: str):
                 }, ensure_ascii=False,
             ),
         )
-    agent = get_fact_checker_agent()
+    all_tools = [tool_map[x] for x in selected_tools] + \
+        [retriever_map[x] for x in selected_retrievers]
+    agent = get_fact_checker_agent(all_tools)
     response = agent.stream(
         {
             'tweet_text': claim,
@@ -59,6 +67,10 @@ if __name__ == '__main__':
     inputs = [
         gr.Image(type='pil', interactive=True, label='Image'),
         gr.Textbox(lines=2, label='Claim', interactive=True),
+        gr.Checkboxgroup(list(tool_map.keys()), value=list(
+            tool_map.keys()), label='Tools'),
+        gr.Checkboxgroup(list(retriever_map.keys()), value=list(
+            retriever_map.keys()), label='Retriever'),
     ]
     outputs = gr.Markdown(label='输出', sanitize_html=False)
 
