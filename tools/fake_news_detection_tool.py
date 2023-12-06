@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Type
 from urllib.parse import urljoin
 
 import requests
 from langchain.tools import BaseTool
+from pydantic import BaseModel
+from pydantic import Field
+from pyrootutils import setup_root
 
 from config import Config
+
+root = setup_root('.')
 
 config = Config()
 
@@ -30,15 +36,24 @@ def load_image_content(image_path: str) -> dict:
     return tweet_content
 
 
+class FNDScheme(BaseModel):
+    text: str = Field(description='Should be text content of the tweet.')
+    image_path: str = Field(
+        description='Should be image path of the tweet.',
+        default=str(root / '.temp' / 'tweet_content.json'),
+    )
+
+
 class FakeNewsDetectionTool(BaseTool):
     name = 'fnd_tool'
     description = (
         'use this tool to get machine learning model prediction whether a tweet is true/false. '
         'CANNOT be used as the only indicator. '
-        'use the parameter `text` and `image_path` as input.'
+        'the parameter should be `text` and `image_path`.'
     )
+    args_schema: type[FNDScheme] = FNDScheme
 
-    def _run(self, text: str, image_path: str) -> str:
+    def _run(self, text: str, image_path: str = str(root / '.temp' / 'tweet_content.json')) -> str:
         """use tweet summary as input. could be in English and Chinese."""
         tweet_content = load_image_content(image_path)
         return get_core_result(text=text, image=tweet_content['tweet_image'])
