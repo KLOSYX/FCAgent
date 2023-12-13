@@ -74,17 +74,15 @@ def get_fact_checker_chain():
     return chain
 
 
-agent_template = """You are a professional fact checker. Given the following tweet text, \
-please judge whether the tweet is true or false and give your reasons step by step. Current date: {date}
+agent_template = """You are a professional fact checker. Given the following tweet text \
+and tweet image path, please judge whether the tweet is true or false and \
+give your reasons step by step.
 tweet text: {tweet_text}
 tweet image path: {tweet_image_path}"""
 
 agent_prompt = PromptTemplate(
     input_variables=['tweet_text', 'tweet_image_path'],
     template=agent_template,
-    partial_variables={
-        'date': datetime.now().strftime('%Y-%m-%d'),
-    },
 )
 
 
