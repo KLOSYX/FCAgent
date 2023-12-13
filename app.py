@@ -11,6 +11,7 @@ from pyrootutils import setup_root
 from config import Config
 from fact_checker import get_fact_checker_agent
 from retriever import RETRIEVER_LIST
+from tools import get_summarizer_chain
 from tools import TOOL_LIST
 
 root = setup_root('.', pythonpath=True, dotenv=True)
@@ -59,6 +60,14 @@ def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_re
         partial_message = partial_message + \
             '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
         yield partial_message
+    summarizer = get_summarizer_chain()
+    summarization = summarizer.invoke(
+        {
+            'claim_text': claim,
+            'history': partial_message,
+        },
+    ).content
+    yield partial_message + '\n---\n' + summarization
 
 
 if __name__ == '__main__':
