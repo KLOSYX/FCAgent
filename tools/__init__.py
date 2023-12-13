@@ -6,10 +6,12 @@ __all__ = [
     'FakeNewsDetectionTool',
     'ImageComprehendingTool',
     'TOOL_LIST',
+    'get_summarizer_chain',
 ]
 
 from .fake_news_detection_tool import FakeNewsDetectionTool
 from .multi_modal_content_comprehending import ImageComprehendingTool
+from .summarizer import get_summarizer_chain
 
 TOOL_LIST = [
     FakeNewsDetectionTool(),
