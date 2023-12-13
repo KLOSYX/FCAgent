@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
@@ -31,7 +31,7 @@ prompt = PromptTemplate(
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | OpenAI(temperature=.7) | parser
+    chain = prompt | ChatOpenAI(temperature=.7) | parser
     return chain
 
 
