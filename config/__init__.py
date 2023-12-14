@@ -11,5 +11,5 @@ __all__ = [
 class Config:
     core_server_addr: str = 'http://10.26.128.30:8000'
     vl_server_addr: str = 'http://10.26.128.30:8001'
-    model_name: str = 'gpt-3.5-turbo-1106'
+    model_name: str = 'gpt-4-1106-preview'
     search_engine: str = 'bing'

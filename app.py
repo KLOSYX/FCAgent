@@ -47,7 +47,7 @@ def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_re
             ),
         )
     all_tools = [tool_map[x] for x in selected_tools] + \
-        [retriever_map[x] for x in selected_retrievers]
+                [retriever_map[x] for x in selected_retrievers]
     agent = get_fact_checker_agent(all_tools)
     response = agent.stream(
         {
@@ -96,4 +96,4 @@ if __name__ == '__main__':
     gr.Interface(
         inference, inputs, outputs, title=title,
         description=description, article=article,
-    ).queue().launch()
+    ).queue().launch(server_name='0.0.0.0', server_port=7860, ssl_verify=False)
