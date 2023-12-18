@@ -76,6 +76,7 @@ def get_fact_checker_chain():
 
 agent_template = """You are a professional fact checker. Given the following tweet text, \
 please judge whether the tweet is true or false and give your reasons step by step. Current date: {date}
+Your 'Observation' and 'final answer' MUST be in Chinese! Keep that in mind.
 tweet text: {tweet_text}
 tweet image path: {tweet_image_path}"""
 

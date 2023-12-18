@@ -16,7 +16,7 @@ from config import Config
 config = Config()
 root = setup_root('.')
 
-template = """"Please provide a brief description of the image content and textual information."""
+template = """"请简要描述一下图像的内容以及图像中的文本信息。"""
 
 
 def get_vl_result(image: str) -> str:
