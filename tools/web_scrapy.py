@@ -6,7 +6,12 @@ from langchain.chains import create_extraction_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools import BaseTool
+
+from config import Config
+
+config = Config()
 
 schema = {
     'properties': {
@@ -28,11 +33,17 @@ def get_web_content_from_url(urls: list[str]):
     html2text = Html2TextTransformer()
     docs_transformed = html2text.transform_documents(docs)
 
-    # Process the first split
-    extracted_content = extract(
-        schema=schema, content=docs_transformed[0].page_content, llm=llm,
+    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=4096, chunk_overlap=0,
     )
-    return extracted_content
+    splits = splitter.split_documents(docs_transformed)
+    results: list[str] = []
+    for split in splits[:config.web_scrapy_max_splits]:
+        extracted_content = extract(
+            schema=schema, content=split.page_content, llm=llm,
+        )
+        results.extend(extracted_content)
+    return results
 
 
 class WebBrowsingTool(BaseTool):
@@ -44,7 +55,7 @@ class WebBrowsingTool(BaseTool):
 
     def _run(self, url: str) -> str:
         web_content = get_web_content_from_url([url])
-        return str(web_content) + '\n'
+        return '\n'.join(map(str, web_content)) + '\n'
 
     def _arun(self, image_path: str) -> list[str]:
         raise NotImplementedError('This tool does not support async')
