@@ -7,12 +7,12 @@ template = """claim: {claim_text}
 
 info: {history}
 
-You are an editor of a fact-check agency, and you need to summarize a short fact-check article \
-based on the information above, and provide your judgment on the authenticity of social media message.
+You are an editor of a fact-check agency, and you need to release a fact-checking article \
+based on the information above, and provide your judgment on the authenticity of social media tweet.
 Your output must include two parts in the following format:
 - Rating: (True/False/Uncertain)
-- Comment: (Your scoring reason)
-Now please output in the format above, using Markdown formats:
+- Comment: (Your fact-checking article. Should be professional and rational.)
+Now please give your rating and comment:
 """
 
 prompt = PromptTemplate(
