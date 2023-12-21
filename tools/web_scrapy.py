@@ -6,6 +6,7 @@ from langchain.chains import create_extraction_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
+from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools import BaseTool
 
@@ -16,7 +17,10 @@ config = Config()
 schema = {
     'properties': {
         'article_title': {'type': 'string'},
-        'article_summary': {'type': 'string'},
+        'article_summary': {
+            'type': 'string',
+            'description': 'Summarize all the main points of the article.',
+        },
     },
     'required': ['article_title', 'article_summary'],
 }

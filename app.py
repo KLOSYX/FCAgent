@@ -87,11 +87,10 @@ if __name__ == '__main__':
     ]
     outputs = gr.Markdown(label='输出', sanitize_html=False)
 
-    title = 'FCAgent'
-    description = '该项目旨在提供一个基于大型语言模型(LLM)的代理，用于通过分析图像和文本内容来验证多模态社交媒体信息。\
-    它利用一套Python工具和AI模型来评估社交媒体信息的真实性，并理解与tweet关联的图像中的内容。\
-    该系统以模块化为重点构建，允许轻松扩展或修改其功能。'
-    article = 'FCAgent'
+    title = '多模态失序信息检测原型系统'
+    description = '该系统提供一个基于大型语言模型(LLM)的代理，用于通过分析图像和文本内容来验证多模态社交媒体信息的真实性。\
+    系统接受文本和图像作为输入，并可以灵活组合不同的工具/知识库。 系统将输出真实性判断以及事实核查信息。'
+    article = '多模态失序信息检测原型系统'
 
     gr.Interface(
         inference, inputs, outputs, title=title,
