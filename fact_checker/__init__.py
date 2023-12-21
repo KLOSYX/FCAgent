@@ -13,15 +13,14 @@ from langchain.tools.render import render_text_description
 from pydantic import BaseModel
 from pydantic import Field
 
-from config import Config
+from config import config
 
-__all__ = ['get_fact_checker_agent']
-config = Config()
+__all__ = ["get_fact_checker_agent"]
 
 
 class FactChecker(BaseModel):
     reason: str = Field(
-        'Explain why the tweet is real/fake in detail. Output in Markdown format.',
+        "Explain why the tweet is real/fake in detail. Output in Markdown format.",
     )
     conclusion: str = Field(
         "The truthfulness of the tweet, could be 'real'/'fake'.",
@@ -57,20 +56,30 @@ output:"""
 agent_prompt = PromptTemplate(
     template=template,
     input_variables=[
-        'claim', 'image_caption',
-        'ai_knowledge', 'wiki_knowledge', 'web_knowledge', 'real_prob', 'fake_prob',
+        "claim",
+        "image_caption",
+        "ai_knowledge",
+        "wiki_knowledge",
+        "web_knowledge",
+        "real_prob",
+        "fake_prob",
     ],
     partial_variables={
-        'format_instruction': parser.get_format_instructions(),
-        'time': datetime.now().strftime('%Y-%m-%d'),
+        "format_instruction": parser.get_format_instructions(),
+        "time": datetime.now().strftime("%Y-%m-%d"),
     },
 )
 
 
 def get_fact_checker_chain():
-    chain = agent_prompt | ChatOpenAI(
-        temperature=.7, model_name=config.model_name,
-    ) | parser
+    chain = (
+        agent_prompt
+        | ChatOpenAI(
+            temperature=0.7,
+            model_name=config.model_name,
+        )
+        | parser
+    )
     return chain
 
 
@@ -81,31 +90,39 @@ tweet text: {tweet_text}
 tweet image path: {tweet_image_path}"""
 
 agent_prompt = PromptTemplate(
-    input_variables=['tweet_text', 'tweet_image_path'],
+    input_variables=["tweet_text", "tweet_image_path"],
     template=agent_template,
     partial_variables={
-        'date': datetime.now().strftime('%Y-%m-%d'),
+        "date": datetime.now().strftime("%Y-%m-%d"),
     },
 )
 
 
 def get_fact_checker_agent(tools):
-    llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
-    prompt = hub.pull('hwchase17/react-json')
+    llm = ChatOpenAI(temperature=0.7, model_name=config.model_name)
+    prompt = hub.pull("hwchase17/react-json")
     prompt = prompt.partial(
         tools=render_text_description(tools),
-        tool_names=', '.join([t.name for t in tools]),
+        tool_names=", ".join([t.name for t in tools]),
     )
-    llm_with_stop = llm.bind(stop=['\nObservation'])
+    llm_with_stop = llm.bind(stop=["\nObservation"])
     agent = (
         {
-            'input': lambda x: x['input'],
-            'agent_scratchpad': lambda x: format_log_to_str(x['intermediate_steps']), }
+            "input": lambda x: x["input"],
+            "agent_scratchpad": lambda x: format_log_to_str(x["intermediate_steps"]),
+        }
         | prompt
         | llm_with_stop
         | ReActJsonSingleInputOutputParser()
     )
-    chain = agent_prompt | {'input': lambda x: x} | AgentExecutor(
-        agent=agent, tools=tools, verbose=True, handle_parsing_errors='Check your output and make sure it conforms!\n',
+    chain = (
+        agent_prompt
+        | {"input": lambda x: x}
+        | AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors="Check your output and make sure it conforms!\n",
+        )
     )
     return chain
