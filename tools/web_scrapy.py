@@ -27,7 +27,7 @@ def extract(content: str, schema: dict, llm: Any):
 
 
 def get_web_content_from_url(urls: list[str]):
-    llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106', streaming=True)
+    llm = ChatOpenAI(temperature=.7, streaming=True)
     loader = AsyncHtmlLoader(urls)
     docs = loader.load()
     html2text = Html2TextTransformer()
