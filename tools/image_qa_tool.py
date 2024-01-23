@@ -56,5 +56,6 @@ class ImageQATool(BaseTool):
         tweet_content = load_tweet_content(image_path)
         return get_vl_result(tweet_content['tweet_image'], question) + '\n'
 
-    def _arun(self, question: str) -> str:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, question: str, image_path: str) -> str:
+        tweet_content = load_tweet_content(image_path)
+        return get_vl_result(tweet_content['tweet_image'], question) + '\n'

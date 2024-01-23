@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 __all__ = [
-    'get_closed_knowledge_chain',
-    'get_qga_chain',
-    'get_wiki_result',
-    'ClosedBookTool',
-    'WikipediaTool',
-    'get_web_searcher',
-    'WebSearchTool',
-    'RETRIEVER_LIST',
+    "get_closed_knowledge_chain",
+    "get_qga_chain",
+    "get_wiki_result",
+    "ClosedBookTool",
+    "WikipediaTool",
+    "get_web_searcher",
+    "WebSearchTool",
+    "RETRIEVER_LIST",
 ]
 
 from .closed_book_knowledge import get_closed_knowledge_chain, ClosedBookTool

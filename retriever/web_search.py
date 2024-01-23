@@ -37,5 +37,6 @@ class WebSearchTool(BaseTool):
         """use string 'query' as input. could be any language."""
         return get_web_searcher().run(query) + '\n'
 
-    def _arun(self, query: str) -> list[str]:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, query: str) -> str:
+        """use string 'query' as input. could be any language."""
+        return get_web_searcher().run(query) + '\n'

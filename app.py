@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import Any
 
 import gradio as gr
+from PIL import Image
 from pyrootutils import setup_root
 
 from config import Config
@@ -28,9 +29,9 @@ def list_to_markdown(lst):
     return markdown
 
 
-def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]):
+def inference(raw_image: Any, claim: str):
     if not raw_image or not claim:
-        return '图像和文本不能为空！'
+        raise ValueError('Image and text should be both provided.')
     tmp_dir = root / '.temp'
     if not tmp_dir.exists():
         tmp_dir.mkdir(parents=True)
@@ -49,25 +50,35 @@ def inference(raw_image: Any, claim: str, selected_tools: list[str], selected_re
     all_tools = [tool_map[x] for x in selected_tools] + \
                 [retriever_map[x] for x in selected_retrievers]
     agent = get_fact_checker_agent(all_tools)
-    response = agent.stream(
-        {
-            'tweet_text': claim,
-            'tweet_image_path': str(tmp_dir / 'tweet_content.json'),
-        },
-    )
     partial_message = ''
-    for chunk in response:
-        partial_message = partial_message + \
-            '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
-        yield partial_message
+    async for chunk in agent.astream_log(
+            {
+                'tweet_text': claim,
+                'tweet_image_path': str(tmp_dir / 'tweet_content.json'),
+            },
+    ):
+        for op in chunk.ops:
+            if op['path'].startswith('/logs/') and op['path'].endswith(
+                    '/streamed_output_str/-',
+            ):
+                # because we chose to only include LLMs, these are LLM tokens
+                partial_message += op['value']
+            if partial_message.endswith('```'):
+                partial_message += '\n'
+            yield partial_message
+        # partial_message = partial_message + \
+        #                   '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
+        # yield partial_message
+    partial_message += '\n\n---\n\n'
     summarizer = get_summarizer_chain()
-    summarization = summarizer.invoke(
+    async for chunk in summarizer.astream(
         {
             'claim_text': claim,
             'history': partial_message,
         },
-    ).content
-    yield partial_message + '\n---\n' + summarization
+    ):
+        partial_message += chunk.content
+        yield partial_message
 
 
 if __name__ == '__main__':

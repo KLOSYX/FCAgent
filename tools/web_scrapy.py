@@ -6,7 +6,6 @@ from langchain.chains import create_extraction_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
-from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools import BaseTool
 
@@ -17,10 +16,7 @@ config = Config()
 schema = {
     'properties': {
         'article_title': {'type': 'string'},
-        'article_summary': {
-            'type': 'string',
-            'description': 'Summarize all the main points of the article.',
-        },
+        'article_summary': {'type': 'string'},
     },
     'required': ['article_title', 'article_summary'],
 }
@@ -31,7 +27,7 @@ def extract(content: str, schema: dict, llm: Any):
 
 
 def get_web_content_from_url(urls: list[str]):
-    llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106')
+    llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106', streaming=True)
     loader = AsyncHtmlLoader(urls)
     docs = loader.load()
     html2text = Html2TextTransformer()
@@ -61,8 +57,9 @@ class WebBrowsingTool(BaseTool):
         web_content = get_web_content_from_url([url])
         return '\n'.join(map(str, web_content)) + '\n'
 
-    def _arun(self, image_path: str) -> list[str]:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, url: str) -> str:
+        web_content = get_web_content_from_url([url])
+        return '\n'.join(map(str, web_content)) + '\n'
 
 
 if __name__ == '__main__':

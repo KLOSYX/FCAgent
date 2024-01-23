@@ -69,15 +69,14 @@ agent_prompt = PromptTemplate(
 
 def get_fact_checker_chain():
     chain = agent_prompt | ChatOpenAI(
-        temperature=.7, model_name=config.model_name,
+        temperature=.7, model_name=config.model_name, streaming=True,
     ) | parser
     return chain
 
 
-agent_template = """You are a professional fact checker. Given the following tweet text, \
-please judge whether the tweet is true or false and give your reasons step by step. \
-Your 'Thought' and 'Final Answer' MUST be in Chinese!
-Current date: {date}
+agent_template = """You are a professional fact checker. Given the following tweet text \
+and tweet image path, please judge whether the tweet is true or false and \
+give your reasons step by step. Current date: {date}
 tweet text: {tweet_text}
 tweet image path: {tweet_image_path}"""
 
@@ -91,7 +90,9 @@ agent_prompt = PromptTemplate(
 
 
 def get_fact_checker_agent(tools):
-    llm = ChatOpenAI(model_name=config.model_name)
+    llm = ChatOpenAI(
+        temperature=.7, model_name=config.model_name, streaming=True,
+    )
     prompt = hub.pull('hwchase17/react-json')
     prompt = prompt.partial(
         tools=render_text_description(tools),
@@ -106,7 +107,7 @@ def get_fact_checker_agent(tools):
         | llm_with_stop
         | ReActJsonSingleInputOutputParser()
     )
-    agent = agent_prompt | {'input': lambda x: x} | AgentExecutor(
+    chain = agent_prompt | {'input': lambda x: x} | AgentExecutor(
         agent=agent, tools=tools, verbose=True, handle_parsing_errors='Check your output and make sure it conforms!\n',
     )
-    return agent
+    return chain
