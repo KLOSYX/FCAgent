@@ -29,7 +29,7 @@ def list_to_markdown(lst):
     return markdown
 
 
-def inference(raw_image: Any, claim: str):
+async def inference(raw_image: Any, claim: str, selected_tools: list, selected_retrievers: list):
     if not raw_image or not claim:
         raise ValueError('Image and text should be both provided.')
     tmp_dir = root / '.temp'
