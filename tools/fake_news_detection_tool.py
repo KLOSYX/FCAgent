@@ -58,5 +58,7 @@ class FakeNewsDetectionTool(BaseTool):
         tweet_content = load_image_content(image_path)
         return get_core_result(text=text, image=tweet_content['tweet_image'])
 
-    def _arun(self, text: str) -> list[str]:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, text: str, image_path: str = str(root / '.temp' / 'tweet_content.json')) -> str:
+        """use tweet summary as input. could be in English and Chinese."""
+        tweet_content = load_image_content(image_path)
+        return get_core_result(text=text, image=tweet_content['tweet_image'])

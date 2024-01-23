@@ -69,7 +69,7 @@ agent_prompt = PromptTemplate(
 
 def get_fact_checker_chain():
     chain = agent_prompt | ChatOpenAI(
-        temperature=.7, model_name=config.model_name,
+        temperature=.7, model_name=config.model_name, streaming=True,
     ) | parser
     return chain
 
@@ -90,7 +90,9 @@ agent_prompt = PromptTemplate(
 
 
 def get_fact_checker_agent(tools):
-    llm = ChatOpenAI(temperature=.7, model_name=config.model_name)
+    llm = ChatOpenAI(
+        temperature=.7, model_name=config.model_name, streaming=True,
+    )
     prompt = hub.pull('hwchase17/react-json')
     prompt = prompt.partial(
         tools=render_text_description(tools),

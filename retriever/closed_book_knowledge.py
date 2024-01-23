@@ -31,7 +31,7 @@ prompt = PromptTemplate(
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | ChatOpenAI(temperature=.7) | parser
+    chain = prompt | ChatOpenAI(temperature=.0, streaming=True) | parser
     return chain
 
 
@@ -48,8 +48,10 @@ class ClosedBookTool(BaseTool):
             f'{i}. {s}' for i, s in enumerate(get_closed_knowledge_chain().invoke({'text_input': query}))
         ) + '\n'
 
-    def _arun(self, query: str) -> list[str]:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, query: str):
+        return '\n'.join(
+            f'{i}. {s}' for i, s in enumerate(get_closed_knowledge_chain().invoke({'text_input': query}))
+        ) + '\n'
 
 
 if __name__ == '__main__':

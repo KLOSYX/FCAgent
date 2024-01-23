@@ -22,5 +22,5 @@ prompt = PromptTemplate(
 
 
 def get_summarizer_chain():
-    chain = prompt | ChatOpenAI(temperature=.7)
+    chain = prompt | ChatOpenAI(temperature=.7, streaming=True)
     return chain

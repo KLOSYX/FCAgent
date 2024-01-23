@@ -29,5 +29,6 @@ class WikipediaTool(BaseTool):
         """use string 'query' as input. must be English."""
         return '\n'.join(f'{i}. {s}' for i, s in enumerate(get_wiki_result(key_words=query))) + '\n'
 
-    def _arun(self, query: str) -> list[str]:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, query: str) -> str:
+        """use string 'query' as input. must be English."""
+        return '\n'.join(f'{i}. {s}' for i, s in enumerate(get_wiki_result(key_words=query))) + '\n'

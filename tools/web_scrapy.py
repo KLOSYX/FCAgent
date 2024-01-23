@@ -27,7 +27,7 @@ def extract(content: str, schema: dict, llm: Any):
 
 
 def get_web_content_from_url(urls: list[str]):
-    llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106')
+    llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106', streaming=True)
     loader = AsyncHtmlLoader(urls)
     docs = loader.load()
     html2text = Html2TextTransformer()
@@ -57,8 +57,9 @@ class WebBrowsingTool(BaseTool):
         web_content = get_web_content_from_url([url])
         return '\n'.join(map(str, web_content)) + '\n'
 
-    def _arun(self, image_path: str) -> list[str]:
-        raise NotImplementedError('This tool does not support async')
+    async def _arun(self, url: str) -> str:
+        web_content = get_web_content_from_url([url])
+        return '\n'.join(map(str, web_content)) + '\n'
 
 
 if __name__ == '__main__':
