@@ -7,12 +7,12 @@ from langchain.prompts import PromptTemplate
 
 examples = [
     {
-        'text': "See, I was right! You gotta watch out for these things. They're everywhere @ mindblowing on the road \
+        "text": "See, I was right! You gotta watch out for these things. They're everywhere @ mindblowing on the road \
         in NJ #sandy",
-        'image_caption': 'A shark fin is seen rising above the water next to a car.',
-        'reason': 'The text mentions an event in New Jersey during Hurricane Sandy. The image shows a shark swimming \
-        on a road, which is suspicious and possibly doctored. It may not have happened at the mentioned location.',
-        'query': 'shark photographed swimming on road, New Jersey, Hurricane Sandy',
+        "image_caption": "A shark fin is seen rising above the water next to a car.",
+        "reason": "The text mentions an event in New Jersey during Hurricane Sandy. The image shows a shark swimming \
+        on a road, which is suspicious and possibly doctored. It may not have happened at the mentioned location.",
+        "query": "shark photographed swimming on road, New Jersey, Hurricane Sandy",
     },
 ]
 
@@ -26,7 +26,7 @@ Ouput:
 """
 
 example_prompt = PromptTemplate(
-    input_variables=['text', 'image_caption', 'reason', 'query'],
+    input_variables=["text", "image_caption", "reason", "query"],
     template=example_template,
 )
 
@@ -50,31 +50,35 @@ prompt = FewShotPromptTemplate(
     example_prompt=example_prompt,
     prefix=prefix,
     suffix=suffix,
-    input_variables=['text_input', 'image_caption'],
-    example_separator='\n\n',
+    input_variables=["text_input", "image_caption"],
+    example_separator="\n\n",
 )
 
 
 def get_qga_chain():
-    chain = prompt | OpenAI(temperature=.7) | MarkdownListOutputParser()
+    chain = prompt | OpenAI(temperature=0.7) | MarkdownListOutputParser()
     return chain
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pyrootutils import setup_root
 
-    root = setup_root('.', dotenv=True)
+    root = setup_root(".", dotenv=True)
 
     print(
-        prompt.invoke({
-            'text_input': 'Hello world!',
-            'image_caption': 'Hello world!',
-        }).text,
+        prompt.invoke(
+            {
+                "text_input": "Hello world!",
+                "image_caption": "Hello world!",
+            }
+        ).text,
     )
     chain = get_qga_chain()
     print(
-        chain.invoke({
-            'text_input': 'NASA has just discovered a new planet in the Andromeda galaxy',
-            'image_caption': 'Not provided.',
-        }),
+        chain.invoke(
+            {
+                "text_input": "NASA has just discovered a new planet in the Andromeda galaxy",
+                "image_caption": "Not provided.",
+            }
+        ),
     )
