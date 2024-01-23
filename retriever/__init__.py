@@ -11,10 +11,10 @@ __all__ = [
     "RETRIEVER_LIST",
 ]
 
-from .closed_book_knowledge import get_closed_knowledge_chain, ClosedBookTool
+from .closed_book_knowledge import ClosedBookTool, get_closed_knowledge_chain
 from .query_generation_agent import get_qga_chain
-from .wiki_knowledge import get_wiki_result, WikipediaTool
-from .web_search import get_web_searcher, WebSearchTool
+from .web_search import WebSearchTool, get_web_searcher
+from .wiki_knowledge import WikipediaTool, get_wiki_result
 
 RETRIEVER_LIST = [
     ClosedBookTool(),

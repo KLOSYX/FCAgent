@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from langchain.llms import OpenAI
 from langchain.output_parsers import MarkdownListOutputParser
-from langchain.prompts import FewShotPromptTemplate
-from langchain.prompts import PromptTemplate
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 
 examples = [
     {
@@ -20,7 +19,7 @@ example_template = """
 Input:
     - text: {text}
     - image_caption: {image_caption}
-Ouput:
+Output:
     - reason: {reason}
     - query: {query}
 """
@@ -70,7 +69,7 @@ if __name__ == "__main__":
             {
                 "text_input": "Hello world!",
                 "image_caption": "Hello world!",
-            }
+            },
         ).text,
     )
     chain = get_qga_chain()
@@ -79,6 +78,6 @@ if __name__ == "__main__":
             {
                 "text_input": "NASA has just discovered a new planet in the Andromeda galaxy",
                 "image_caption": "Not provided.",
-            }
+            },
         ),
     )
