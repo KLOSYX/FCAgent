@@ -38,19 +38,15 @@ def load_tweet_content(image_path: str) -> dict:
 class ImageScheme(BaseModel):
     image_path: str = Field(
         description="Should be the path of tweet image.",
-        default=str(root / ".temp" / "tweet_content.json"),
     )
 
 
 class ImageComprehendingTool(BaseTool):
     name = "image_comprehending_tool"
-    description = (
-        "Use this tool to obtain text descriptions of tweet image content"
-        "use parameter `image_path` as input"
-    )
+    description = "Use this tool to obtain text descriptions of tweet image content"
     args_schema: type[ImageScheme] = ImageScheme
 
-    def _run(self, image_path: str) -> str:
+    def _run(self, image_path: str = str(root / ".temp" / "tweet_content.json")) -> str:
         """use tweet summary as input.
 
         could be in English and Chinese.
@@ -58,6 +54,6 @@ class ImageComprehendingTool(BaseTool):
         tweet_content = load_tweet_content(image_path)
         return get_vl_result(tweet_content["tweet_image"]) + "\n"
 
-    async def _arun(self, image_path: str) -> str:
+    async def _arun(self, image_path: str = str(root / ".temp" / "tweet_content.json")) -> str:
         tweet_content = load_tweet_content(image_path)
         return get_vl_result(tweet_content["tweet_image"]) + "\n"

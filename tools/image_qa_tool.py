@@ -35,26 +35,23 @@ def load_tweet_content(image_path: str) -> dict:
 
 class ImageQAScheme(BaseModel):
     question: str = Field(
-        description="Should be the question of tweet image.",
-    )
-    image_path: str = Field(
-        description="Should be the path of tweet image.",
-        default=str(root / ".temp" / "tweet_content.json"),
+        description="Should be the question about the tweet image.",
     )
 
 
 class ImageQATool(BaseTool):
     name = "image_qa_tool"
-    description = (
-        "Use this tool to ask any question about the tweet image content"
-        "use parameter `question` as input"
-    )
+    description = "Use this tool to ask any question about the tweet image content"
     args_schema: type[ImageQAScheme] = ImageQAScheme
 
-    def _run(self, question: str, image_path: str) -> str:
+    def _run(
+        self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
+    ) -> str:
         tweet_content = load_tweet_content(image_path)
         return get_vl_result(tweet_content["tweet_image"], question) + "\n"
 
-    async def _arun(self, question: str, image_path: str) -> str:
+    async def _arun(
+        self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
+    ) -> str:
         tweet_content = load_tweet_content(image_path)
         return get_vl_result(tweet_content["tweet_image"], question) + "\n"
