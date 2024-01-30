@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from urllib.parse import urljoin
 
+import aiohttp
 import requests
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -25,6 +26,16 @@ def get_vl_result(image: str, text: str) -> str:
     # 获取响应结果
     result = response.text
     return result
+
+
+async def stream_get_vl_result(image: str, text: str):
+    params = {"image": image, "text": text}
+    url = urljoin(config.vl_server_addr, "/vl_stream")
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, data=params) as response:
+            # 使用iter_any方法逐块读取响应
+            async for chunk in response.content.iter_any():
+                yield chunk.decode("utf-8")
 
 
 def load_tweet_content(image_path: str) -> dict:
@@ -54,4 +65,8 @@ class ImageQATool(BaseTool):
         self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
     ) -> str:
         tweet_content = load_tweet_content(image_path)
-        return get_vl_result(tweet_content["tweet_image"], question) + "\n"
+        res = ""
+        async for token in stream_get_vl_result(tweet_content["tweet_image"], question):
+            res = token
+            print("\r" + token, flush=True, end="")
+        return res + "\n"

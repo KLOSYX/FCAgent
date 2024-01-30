@@ -9,7 +9,7 @@ from langchain.agents.output_parsers import ReActJsonSingleInputOutputParser
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
-from langchain.tools.render import render_text_description
+from langchain.tools.render import render_text_description_and_args
 from pydantic import BaseModel, Field
 
 from config import Config
@@ -107,7 +107,7 @@ def get_fact_checker_agent(tools):
     )
     prompt = hub.pull("hwchase17/react-json")
     prompt = prompt.partial(
-        tools=render_text_description(tools),
+        tools=render_text_description_and_args(tools),
         tool_names=", ".join([t.name for t in tools]),
     )
     llm_with_stop = llm.bind(stop=["\nObservation"])
