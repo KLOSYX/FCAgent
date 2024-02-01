@@ -4,28 +4,38 @@ import json
 from pathlib import Path
 from urllib.parse import urljoin
 
+import aiohttp
 import requests
 from langchain.tools import BaseTool
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
-from config import Config
+from config import config
 
-config = Config()
-root = setup_root('.')
+root = setup_root(".")
 
 
 def get_vl_result(image: str, text: str) -> str:
     # 构造请求参数
-    params = {'image': image, 'text': text}
+    params = {"image": image, "text": text}
     # 发送POST请求
     response = requests.post(
-        urljoin(config.vl_server_addr, '/vl'), data=params,
+        urljoin(config.vl_server_addr, "/vl"),
+        data=params,
     )
     # 获取响应结果
     result = response.text
     return result
+
+
+async def stream_get_vl_result(image: str, text: str):
+    params = {"image": image, "text": text}
+    url = urljoin(config.vl_server_addr, "/vl_stream")
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, data=params) as response:
+            # 使用iter_any方法逐块读取响应
+            async for chunk in response.content.iter_any():
+                yield chunk.decode("utf-8")
 
 
 def load_tweet_content(image_path: str) -> dict:
@@ -36,26 +46,27 @@ def load_tweet_content(image_path: str) -> dict:
 
 class ImageQAScheme(BaseModel):
     question: str = Field(
-        description='Should be the question of tweet image.',
-    )
-    image_path: str = Field(
-        description='Should be the path of tweet image.',
-        default=str(root / '.temp' / 'tweet_content.json'),
+        description="Should be the question about the tweet image.",
     )
 
 
 class ImageQATool(BaseTool):
-    name = 'image_qa_tool'
-    description = (
-        'Use this tool to ask any question about the tweet image content'
-        'use parameter `question` as input'
-    )
+    name = "image_qa_tool"
+    description = "Use this tool to ask any question about the tweet image content"
     args_schema: type[ImageQAScheme] = ImageQAScheme
 
-    def _run(self, question: str, image_path: str) -> str:
+    def _run(
+        self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
+    ) -> str:
         tweet_content = load_tweet_content(image_path)
-        return get_vl_result(tweet_content['tweet_image'], question) + '\n'
+        return get_vl_result(tweet_content["tweet_image"], question) + "\n"
 
-    async def _arun(self, question: str, image_path: str) -> str:
+    async def _arun(
+        self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
+    ) -> str:
         tweet_content = load_tweet_content(image_path)
-        return get_vl_result(tweet_content['tweet_image'], question) + '\n'
+        res = ""
+        async for token in stream_get_vl_result(tweet_content["tweet_image"], question):
+            res = token
+            print("\r" + token, flush=True, end="")
+        return res + "\n"

@@ -9,3 +9,5 @@ Pillow==10.1.0
 pydantic==2.5.2
 pyrootutils==1.0.4
 requests==2.31.0
+
+aiohttp~=3.9.1

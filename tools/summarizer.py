@@ -16,10 +16,10 @@ template = """推文: {claim_text}
 
 prompt = PromptTemplate(
     template=template,
-    input_variables=['claim_text', 'history'],
+    input_variables=["claim_text", "history"],
 )
 
 
 def get_summarizer_chain():
-    chain = prompt | ChatOpenAI(temperature=.7, streaming=True)
+    chain = prompt | ChatOpenAI(temperature=0.7, streaming=True)
     return chain
