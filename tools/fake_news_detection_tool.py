@@ -42,11 +42,10 @@ class FNDScheme(BaseModel):
 
 
 class FakeNewsDetectionTool(BaseTool):
-    name = "fnd_tool"
+    name = "predict"
     description = (
         "use this tool to get machine learning model prediction whether a tweet is true/false. "
         "CANNOT be used as the only indicator. "
-        "the parameter should be `text` and `image_path`."
     )
     args_schema: type[FNDScheme] = FNDScheme
 

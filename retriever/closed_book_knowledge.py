@@ -35,11 +35,10 @@ def get_closed_knowledge_chain():
 
 
 class ClosedBookTool(BaseTool):
-    name = "closed_book_knowledge_tool"
+    name = "ask_llm"
     description = (
         "use this tool when you need to search for knowledge within ChatGPT, "
         "note that the knowledge you get is relatively unreliable but will be more specific."
-        "use parameter `query` as input."
     )
 
     def _run(self, query: str):

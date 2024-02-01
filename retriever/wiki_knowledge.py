@@ -19,10 +19,10 @@ def get_wiki_result(key_words: str) -> list[str]:
 
 
 class WikipediaTool(BaseTool):
-    name = "en_wikipedia_tool"
+    name = "ask_wikipedia"
     description = "use this tool when you need to retrieve knowledge from Wikipedia. \
     note that knowledge may be out of date, but it is certainly correct. \
-    the query MUST be in English. use parameter `query` as input."
+    the query MUST be in English."
 
     def _run(self, query: str) -> str:
         """use string 'query' as input.

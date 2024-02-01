@@ -53,7 +53,7 @@ class ImageScheme(BaseModel):
 
 
 class ImageComprehendingTool(BaseTool):
-    name = "image_comprehending_tool"
+    name = "caption_image"
     description = "Use this tool to obtain text descriptions of tweet image content"
     args_schema: type[ImageScheme] = ImageScheme
 

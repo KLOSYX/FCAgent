@@ -51,7 +51,7 @@ class ImageQAScheme(BaseModel):
 
 
 class ImageQATool(BaseTool):
-    name = "image_qa_tool"
+    name = "ask_image"
     description = "Use this tool to ask any question about the tweet image content"
     args_schema: type[ImageQAScheme] = ImageQAScheme
 
