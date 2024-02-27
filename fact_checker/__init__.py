@@ -34,60 +34,6 @@ class FactChecker(BaseModel):
 
 parser = PydanticOutputParser(pydantic_object=FactChecker)
 
-template = """You are a fact-checking expert. Now I give you the content of a tweet (including the text as well as the \
-caption of the image), and the probability that the tweet is true/false predicted by AI model, and some knowledge that \
-may be relevant to determining whether the tweet is true or false (note that this knowledge may be irrelevant or false,\
- and that you can't fully trust it); you need to give a conclusion as to the truthfulness of the tweet, and a reason \
- for it, based on this information. today is {time}.
-
-real probability predicted by AI model: {real_prob}
-
-fake probability predicted by AI model: {fake_prob}
-
-tweet text: {claim}
-
-tweet image caption: {image_caption}
-
-AI knowledge: {ai_knowledge}
-
-WiKi knowledge: {wiki_knowledge}
-
-web knowledge: {web_knowledge}
-
-{format_instruction}
-
-output:"""
-
-agent_prompt = PromptTemplate(
-    template=template,
-    input_variables=[
-        "claim",
-        "image_caption",
-        "ai_knowledge",
-        "wiki_knowledge",
-        "web_knowledge",
-        "real_prob",
-        "fake_prob",
-    ],
-    partial_variables={
-        "format_instruction": parser.get_format_instructions(),
-        "time": datetime.now().strftime("%Y-%m-%d"),
-    },
-)
-
-
-def get_fact_checker_chain():
-    chain = (
-        agent_prompt
-        | ChatOpenAI(
-            temperature=0.7,
-            model_name=config.model_name,
-            streaming=True,
-        )
-        | parser
-    )
-    return chain
-
 
 agent_template = """You are a professional fact checker. Given the following tweet text \
 and tweet image path, please judge whether the tweet is true or false and \
