@@ -14,8 +14,8 @@ from tools import TOOL_LIST, get_summarizer_chain
 
 root = setup_root(".", pythonpath=True, dotenv=True)
 
-tool_map = {x.name: x for x in TOOL_LIST}
-retriever_map = {x.name: x for x in RETRIEVER_LIST}
+tool_map = {x.cn_name: x for x in TOOL_LIST}
+retriever_map = {x.cn_name: x for x in RETRIEVER_LIST}
 
 
 def list_to_markdown(lst):
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             label="知识库选择",
         ),
     ]
-    outputs = gr.Markdown(label="Output", sanitize_html=False)
+    outputs = gr.Markdown(label="输出", sanitize_html=False)
 
     title = "多模态失序信息检测原型系统"
     description = "该系统提供一个基于大型语言模型(LLM)的代理，用于通过分析图像和文本内容来验证多模态社交媒体信息的真实性。\
@@ -118,7 +118,11 @@ if __name__ == "__main__":
         inference,
         inputs,
         outputs,
+        allow_flagging="never",
         title=title,
         description=description,
         article=article,
+        submit_btn="提交",
+        stop_btn="停止",
+        clear_btn="清除",
     ).queue().launch(server_name="0.0.0.0", server_port=7860, ssl_verify=False)

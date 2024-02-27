@@ -20,6 +20,7 @@ def get_wiki_result(key_words: str) -> list[str]:
 
 class WikipediaTool(BaseTool):
     name = "ask_wikipedia"
+    cn_name = "维基百科"
     description = "use this tool when you need to retrieve knowledge from Wikipedia. \
     note that knowledge may be out of date, but it is certainly correct. \
     the query MUST be in English."

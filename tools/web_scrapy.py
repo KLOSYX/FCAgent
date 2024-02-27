@@ -49,6 +49,7 @@ def get_web_content_from_url(urls: list[str]):
 
 class WebBrowsingTool(BaseTool):
     name = "browse"
+    cn_name = "网页浏览"
     description = "Use this tool to obtain content of web pages" "use parameter `url` as input"
 
     def _run(self, url: str) -> str:
