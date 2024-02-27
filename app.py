@@ -49,6 +49,7 @@ async def inference(
     all_tools = [tool_map[x] for x in selected_tools] + [
         retriever_map[x] for x in selected_retrievers
     ]
+    all_tool_names = [t.name for t in all_tools]
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
     async for chunk in agent.astream_log(
@@ -58,17 +59,23 @@ async def inference(
         },
     ):
         for op in chunk.ops:
-            if op["path"].startswith("/logs/") and op["path"].endswith(
-                "/streamed_output_str/-",
-            ):
-                # because we chose to only include LLMs, these are LLM tokens
-                partial_message += op["value"]
-                if partial_message.endswith("```"):
-                    partial_message += "\n"
+            if op["path"].startswith("/logs/"):
+                if op["path"].endswith(
+                    "/streamed_output_str/-",
+                ):
+                    # because we chose to only include LLMs, these are LLM tokens
+                    partial_message += op["value"]
+                    if partial_message.endswith("```"):
+                        partial_message += "\n"
+                elif (
+                    op["path"].endswith("final_output")
+                    and op["path"].split("/")[-2].split(":")[0] in all_tool_names
+                ):
+                    if op["value"] is not None:
+                        partial_message += f"\n> output: {str(op['value']['output'])} \n\n"
+                # else:
+                #     partial_message += "\n\n" + str(op["path"]) + str(op["value"]) + "\n\n"
                 yield partial_message
-        # partial_message = partial_message + \
-        #                   '\n'.join([str(msg.content) for msg in chunk['messages']]) + '\n'
-        # yield partial_message
     partial_message += "\n\n---\n\n"
     summarizer = get_summarizer_chain()
     async for chunk in summarizer.astream(

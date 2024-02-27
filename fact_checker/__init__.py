@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 from langchain import hub
@@ -10,12 +11,16 @@ from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.tools.render import render_text_description_and_args
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
+from pyrootutils import setup_root
 
 from config import Config
 
 __all__ = ["get_fact_checker_agent"]
 config = Config()
+
+ROOT = setup_root(".")
 
 
 class FactChecker(BaseModel):
@@ -86,7 +91,7 @@ def get_fact_checker_chain():
 
 agent_template = """You are a professional fact checker. Given the following tweet text \
 and tweet image path, please judge whether the tweet is true or false and \
-give your reasons step by step. Current date: {date}
+give your reasons step by step in Chinese. Current date: {date}
 tweet text: {tweet_text}
 tweet image path: {tweet_image_path}"""
 
@@ -105,7 +110,14 @@ def get_fact_checker_agent(tools):
         model_name=config.model_name,
         streaming=True,
     )
-    prompt = hub.pull("hwchase17/react-json")
+    with open(ROOT / "prompt" / "react_json.json") as f:
+        prompt_raw = json.load(f)
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", prompt_raw["system"]),
+            ("human", prompt_raw["human"]),
+        ]
+    )
     prompt = prompt.partial(
         tools=render_text_description_and_args(tools),
         tool_names=", ".join([t.name for t in tools]),
@@ -127,7 +139,7 @@ def get_fact_checker_agent(tools):
             agent=agent,
             tools=tools,
             verbose=True,
-            handle_parsing_errors="Check your output and make sure it conforms!\n",
+            handle_parsing_errors="请检查调用工具的格式！\n",
         )
     )
     return chain
