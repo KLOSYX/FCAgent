@@ -44,17 +44,17 @@ def load_tweet_content(image_path: str) -> dict:
     return tweet_content
 
 
-class ImageQAScheme(BaseModel):
+class ImageQaScheme(BaseModel):
     question: str = Field(
         description="Should be the question about the tweet image.",
     )
 
 
-class ImageQATool(BaseTool):
+class ImageQaTool(BaseTool):
     name = "ask_image"
     cn_name = "图像问答"
     description = "Use this tool to ask any question about the tweet image content"
-    args_schema: type[ImageQAScheme] = ImageQAScheme
+    args_schema: type[ImageQaScheme] = ImageQaScheme
 
     def _run(
         self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")

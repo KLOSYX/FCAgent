@@ -10,7 +10,8 @@ from pyrootutils import setup_root
 
 from fact_checker import get_fact_checker_agent
 from retriever import RETRIEVER_LIST
-from tools import TOOL_LIST, get_summarizer_chain
+from tools import TOOL_LIST
+from tools.summarizer import get_summarizer_chain
 
 root = setup_root(".", pythonpath=True, dotenv=True)
 
