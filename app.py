@@ -72,8 +72,9 @@ async def inference(
                     op["path"].endswith("final_output")
                     and op["path"].split("/")[-2].split(":")[0] in all_tool_names
                 ):
+                    tool_name = op["path"].split("/")[-2].split(":")[0]
                     if op["value"] is not None:
-                        partial_message += f"\n> output: {str(op['value']['output'])} \n\n"
+                        partial_message += f"\n> {tool_name}输出：{str(op['value']['output'])} \n\n"
                 # else:
                 #     partial_message += "\n\n" + str(op["path"]) + str(op["value"]) + "\n\n"
                 yield partial_message

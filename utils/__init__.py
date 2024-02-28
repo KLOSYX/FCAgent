@@ -6,9 +6,9 @@ from pyrootutils import setup_root
 ROOT = setup_root(".")
 
 
-def load_modules(directory: str) -> list[BaseTool]:
-    """Load all BaseTool classes from directory."""
-    all_modules = []
+def load_base_tools(directory: str) -> list[BaseTool]:
+    """Load all BaseTool instances from directory."""
+    all_instance = []
     path = ROOT / directory
     for filename in path.glob("*.py"):
         if filename.stem == "__init__":
@@ -22,5 +22,5 @@ def load_modules(directory: str) -> list[BaseTool]:
         except AttributeError:
             continue
         if issubclass(cls, BaseTool):
-            all_modules.append(cls())
-    return all_modules
+            all_instance.append(cls())
+    return all_instance
