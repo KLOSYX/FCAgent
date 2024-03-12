@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import base64
-import json
+import hashlib
 from io import BytesIO
 from typing import Any
 
@@ -26,6 +25,23 @@ def list_to_markdown(lst):
     return markdown
 
 
+def generate_filename_from_image(image):
+    # 创建一个BytesIO对象，用于保存图像的二进制数据
+    img_byte_arr = BytesIO()
+    # 将图像保存到BytesIO对象中（这里以PNG格式为例）
+    image.save(img_byte_arr, format="PNG")
+    # 获取图像的二进制数据
+    img_byte_arr = img_byte_arr.getvalue()
+    # 使用sha256哈希算法
+    hasher = hashlib.md5()
+    # 更新哈希值
+    hasher.update(img_byte_arr)
+    # 获取十六进制格式的哈希值
+    hash_value = hasher.hexdigest()[:8]
+    # 根据需要添加文件扩展名（这里以.png为例）
+    return str(hash_value)
+
+
 async def inference(
     raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]
 ):
@@ -33,21 +49,11 @@ async def inference(
     if not tmp_dir.exists():
         tmp_dir.mkdir(parents=True)
     if raw_image is not None:
-        buffer = BytesIO()
-        raw_image.save(buffer, format="JPEG")
-        image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        image_name = generate_filename_from_image(raw_image) + ".png"
+        raw_image.save(f"{tmp_dir}/{image_name}")
     else:
-        image_data = "null"
-    with open(tmp_dir / "tweet_content.json", "w") as f:
-        f.write(
-            json.dumps(
-                {
-                    "tweet_text": claim,
-                    "tweet_image": image_data,
-                },
-                ensure_ascii=False,
-            ),
-        )
+        image_name = "No image"
+
     all_tools = [tool_map[x] for x in selected_tools] + [
         retriever_map[x] for x in selected_retrievers
     ]
@@ -58,11 +64,11 @@ async def inference(
     partial_message = ""
     async for chunk in agent.astream_log(
         {
-            "tweet_text": claim,
-            "tweet_image_path": str(tmp_dir / "tweet_content.json")
-            if raw_image is not None
-            else "No image.",
-        },
+            "input": {
+                "tweet_text": claim,
+                "tweet_image_name": image_name if raw_image is not None else "No image.",
+            }
+        }
     ):
         for op in chunk.ops:
             if op["path"].startswith("/logs/"):

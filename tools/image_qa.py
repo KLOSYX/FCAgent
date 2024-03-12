@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import base64
 import json
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import urljoin
 
 import aiohttp
 import requests
 from langchain.tools import BaseTool
+from PIL import Image
 from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
@@ -38,13 +41,19 @@ async def stream_get_vl_result(image: str, text: str):
                 yield chunk.decode("utf-8")
 
 
-def load_tweet_content(image_path: str) -> dict:
-    with open(Path(image_path)) as f:
-        tweet_content = json.loads(f.read())
-    return tweet_content
+def load_tweet_content(image_name: str) -> str:
+    image_content = Image.open(root / ".temp" / image_name)
+    buffer = BytesIO()
+    image_content.save(buffer, format="PNG")  # 可以选择其他格式,如 JPEG
+    img_bytes = buffer.getvalue()
+
+    # 将字节流编码为 Base64 字符串
+    image_content = base64.b64encode(img_bytes).decode("utf-8")
+    return image_content
 
 
 class ImageQaScheme(BaseModel):
+    image_name: str = Field(description="The name of the image.")
     question: str = Field(
         description="Should be the question about the tweet image.",
     )
@@ -56,18 +65,14 @@ class ImageQaTool(BaseTool):
     description = "Use this tool to ask any question about the tweet image content"
     args_schema: type[ImageQaScheme] = ImageQaScheme
 
-    def _run(
-        self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
-    ) -> str:
-        tweet_content = load_tweet_content(image_path)
-        return get_vl_result(tweet_content["tweet_image"], question) + "\n"
+    def _run(self, question: str, image_name: str) -> str:
+        image_content = load_tweet_content(image_name)
+        return get_vl_result(image_content, question) + "\n"
 
-    async def _arun(
-        self, question: str, image_path: str = str(root / ".temp" / "tweet_content.json")
-    ) -> str:
-        tweet_content = load_tweet_content(image_path)
+    async def _arun(self, question: str, image_name: str) -> str:
+        image_content = load_tweet_content(image_name)
         res = ""
-        async for token in stream_get_vl_result(tweet_content["tweet_image"], question):
+        async for token in stream_get_vl_result(image_content, question):
             res = token
             print("\r" + token, flush=True, end="")
         return res + "\n"

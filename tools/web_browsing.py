@@ -22,7 +22,7 @@ schema = {
 
 
 def extract(content: str, schema: dict, llm: Any):
-    return create_extraction_chain(schema=schema, llm=llm).run(content)
+    return create_extraction_chain(schema=schema, llm=llm).invoke(content)
 
 
 def get_web_content_from_url(urls: list[str]):
@@ -44,7 +44,7 @@ def get_web_content_from_url(urls: list[str]):
             content=split.page_content,
             llm=llm,
         )
-        results.extend(extracted_content)
+        results.extend(extracted_content["text"])
     return results
 
 
