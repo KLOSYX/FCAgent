@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
+from langchain_openai.chat_models import ChatOpenAI
 
 from config import config
 

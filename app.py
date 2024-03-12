@@ -29,14 +29,15 @@ def list_to_markdown(lst):
 async def inference(
     raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]
 ):
-    if not raw_image or not claim:
-        raise ValueError("Image and text should be both provided.")
     tmp_dir = root / ".temp"
     if not tmp_dir.exists():
         tmp_dir.mkdir(parents=True)
-    buffer = BytesIO()
-    raw_image.save(buffer, format="JPEG")
-    image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    if raw_image is not None:
+        buffer = BytesIO()
+        raw_image.save(buffer, format="JPEG")
+        image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    else:
+        image_data = "null"
     with open(tmp_dir / "tweet_content.json", "w") as f:
         f.write(
             json.dumps(
@@ -50,13 +51,17 @@ async def inference(
     all_tools = [tool_map[x] for x in selected_tools] + [
         retriever_map[x] for x in selected_retrievers
     ]
+    if raw_image is None:
+        all_tools = list(filter(lambda x: "image" not in x.name.lower(), all_tools))
     all_tool_names = [t.name for t in all_tools]
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
     async for chunk in agent.astream_log(
         {
             "tweet_text": claim,
-            "tweet_image_path": str(tmp_dir / "tweet_content.json"),
+            "tweet_image_path": str(tmp_dir / "tweet_content.json")
+            if raw_image is not None
+            else "No image.",
         },
     ):
         for op in chunk.ops:

@@ -1,23 +1,15 @@
 from __future__ import annotations
 
-from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
+from langchain_openai.chat_models import ChatOpenAI
 from pydantic import BaseModel, Field
-
-
-class ClosedBookKnowledge(BaseModel):
-    knowledges: list[str] = Field(description="List of the knowledge.")
-
-
-parser = PydanticOutputParser(pydantic_object=ClosedBookKnowledge)
 
 template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want \
 to verify the authenticity of the tweet and you are responsible for providing knowledge that can support/refute the \
 content of the tweet. The knowledge must be true and reliable, so if you don't have the relevant knowledge, please \
 don't provide it.
-{format_template}
 ---
 text: {text_input}
 output: """
@@ -25,12 +17,11 @@ output: """
 prompt = PromptTemplate(
     template=template,
     input_variables=["text_input"],
-    partial_variables={"format_template": parser.get_format_instructions()},
 )
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | ChatOpenAI(temperature=0.0, streaming=True) | parser
+    chain = prompt | ChatOpenAI(temperature=0.0, streaming=True)
     return chain
 
 

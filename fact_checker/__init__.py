@@ -7,11 +7,11 @@ from langchain import hub
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import format_log_to_str
 from langchain.agents.output_parsers import ReActJsonSingleInputOutputParser
-from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.tools.render import render_text_description_and_args
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai.chat_models import ChatOpenAI
 from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
@@ -21,18 +21,6 @@ __all__ = ["get_fact_checker_agent"]
 config = Config()
 
 ROOT = setup_root(".")
-
-
-class FactChecker(BaseModel):
-    reason: str = Field(
-        "Explain why the tweet is real/fake in detail. Output in Markdown format.",
-    )
-    conclusion: str = Field(
-        "The truthfulness of the tweet, could be 'real'/'fake'.",
-    )
-
-
-parser = PydanticOutputParser(pydantic_object=FactChecker)
 
 
 agent_template = """You are a professional fact checker. Given the following tweet text \

@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 from langchain.chains import create_extraction_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import AsyncHtmlLoader
-from langchain.document_transformers import Html2TextTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools import BaseTool
+from langchain_community.document_loaders import AsyncHtmlLoader
+from langchain_community.document_transformers import Html2TextTransformer
+from langchain_openai.chat_models import ChatOpenAI
 
 from config import config
 

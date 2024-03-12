@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from langchain.tools import (
+from langchain_community.tools import (
     BaseTool,
     BingSearchResults,
     DuckDuckGoSearchResults,
     GoogleSearchResults,
 )
-from langchain.utilities import (
+from langchain_community.utilities import (
     BingSearchAPIWrapper,
     DuckDuckGoSearchAPIWrapper,
     GoogleSearchAPIWrapper,
