@@ -25,6 +25,10 @@ def get_closed_knowledge_chain():
     return chain
 
 
+class ClosedBookInput(BaseModel):
+    query: str = Field(description="The query to search closed book. Should be any language.")
+
+
 class ClosedBookTool(BaseTool):
     name = "ask_llm"
     cn_name = "大模型"
@@ -32,6 +36,7 @@ class ClosedBookTool(BaseTool):
         "use this tool when you need to search for knowledge within ChatGPT, "
         "note that the knowledge you get is relatively unreliable but will be more specific."
     )
+    args_schema: type[BaseModel] = ClosedBookInput
 
     def _run(self, query: str):
         return (

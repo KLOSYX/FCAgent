@@ -8,6 +8,7 @@ from langchain.tools import BaseTool
 from langchain_community.document_loaders import AsyncHtmlLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_openai.chat_models import ChatOpenAI
+from pydantic import BaseModel, Field
 
 from config import config
 
@@ -47,10 +48,15 @@ def get_web_content_from_url(urls: list[str]):
     return results
 
 
+class WebBrowsingInput(BaseModel):
+    url: str = Field(description="url of the web page")
+
+
 class WebBrowsingTool(BaseTool):
     name = "browse"
     cn_name = "网页浏览"
-    description = "Use this tool to obtain content of web pages" "use parameter `url` as input"
+    description = "Use this tool to obtain content of web pages"
+    args_schema: type[BaseModel] = WebBrowsingInput
 
     def _run(self, url: str) -> str:
         web_content = get_web_content_from_url([url])

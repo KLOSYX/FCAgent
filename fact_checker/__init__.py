@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 from langchain import hub
-from langchain.agents import AgentExecutor
+from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.agents.format_scratchpad import format_log_to_str
 from langchain.agents.output_parsers import ReActJsonSingleInputOutputParser
 from langchain.output_parsers import PydanticOutputParser
@@ -23,11 +23,11 @@ config = Config()
 ROOT = setup_root(".")
 
 
-agent_template = """You are a professional fact checker. Given the following tweet text \
-and tweet image path, please judge whether the tweet is true or false and \
-give your reasons step by step in Chinese. Current date: {date}
-tweet text: {tweet_text}
-tweet image path: {tweet_image_path}"""
+agent_template = """你是一名专业的事实核查机构编辑，给定如下的推文文本内容 \
+以及推文图片路径，请一步一步地判断推文内容是否真实，并给出你的判断依据。 \
+当前日期：{date}
+推文文本：{tweet_text}
+推文图片路径：{tweet_image_path}"""
 
 agent_prompt = PromptTemplate(
     input_variables=["tweet_text", "tweet_image_path"],
@@ -40,11 +40,10 @@ agent_prompt = PromptTemplate(
 
 def get_fact_checker_agent(tools):
     llm = ChatOpenAI(
-        temperature=0.7,
         model_name=config.model_name,
         streaming=True,
     )
-    with open(ROOT / "prompt" / "react_json.json") as f:
+    with open(ROOT / "prompt" / "openai-tools-agent.json") as f:
         prompt_raw = json.load(f)
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -52,20 +51,7 @@ def get_fact_checker_agent(tools):
             ("human", prompt_raw["human"]),
         ]
     )
-    prompt = prompt.partial(
-        tools=render_text_description_and_args(tools),
-        tool_names=", ".join([t.name for t in tools]),
-    )
-    llm_with_stop = llm.bind(stop=["\nObservation"])
-    agent = (
-        {
-            "input": lambda x: x["input"],
-            "agent_scratchpad": lambda x: format_log_to_str(x["intermediate_steps"]),
-        }
-        | prompt
-        | llm_with_stop
-        | ReActJsonSingleInputOutputParser()
-    )
+    agent = create_openai_tools_agent(llm, tools, prompt)
     chain = (
         agent_prompt
         | {"input": lambda x: x}
