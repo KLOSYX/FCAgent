@@ -59,7 +59,6 @@ async def inference(
     ]
     if raw_image is None:
         all_tools = list(filter(lambda x: "image" not in x.name.lower(), all_tools))
-    all_tool_names = [t.name for t in all_tools]
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
     async for event in agent.astream_events(
