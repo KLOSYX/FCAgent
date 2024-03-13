@@ -1,97 +1,40 @@
 from __future__ import annotations
 
+import json
+import operator
 from datetime import datetime
+from typing import Annotated, List, TypedDict, Union
 
-from langchain import hub
-from langchain.agents import AgentExecutor
-from langchain.agents.format_scratchpad import format_log_to_str
-from langchain.agents.output_parsers import ReActJsonSingleInputOutputParser
-from langchain.chat_models import ChatOpenAI
-from langchain.output_parsers import PydanticOutputParser
-from langchain.prompts import PromptTemplate
-from langchain.tools.render import render_text_description_and_args
-from pydantic import BaseModel, Field
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain.prompts import MessagesPlaceholder, PromptTemplate
+from langchain_core.agents import AgentAction, AgentFinish
+from langchain_core.messages import BaseMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai.chat_models import ChatOpenAI
+from langgraph.graph import END, StateGraph
+from langgraph.prebuilt.tool_executor import ToolExecutor
+from pyrootutils import setup_root
 
 from config import Config
 
 __all__ = ["get_fact_checker_agent"]
 config = Config()
 
+ROOT = setup_root(".")
 
-class FactChecker(BaseModel):
-    reason: str = Field(
-        "Explain why the tweet is real/fake in detail. Output in Markdown format.",
-    )
-    conclusion: str = Field(
-        "The truthfulness of the tweet, could be 'real'/'fake'.",
-    )
-
-
-parser = PydanticOutputParser(pydantic_object=FactChecker)
-
-template = """You are a fact-checking expert. Now I give you the content of a tweet (including the text as well as the \
-caption of the image), and the probability that the tweet is true/false predicted by AI model, and some knowledge that \
-may be relevant to determining whether the tweet is true or false (note that this knowledge may be irrelevant or false,\
- and that you can't fully trust it); you need to give a conclusion as to the truthfulness of the tweet, and a reason \
- for it, based on this information. today is {time}.
-
-real probability predicted by AI model: {real_prob}
-
-fake probability predicted by AI model: {fake_prob}
-
-tweet text: {claim}
-
-tweet image caption: {image_caption}
-
-AI knowledge: {ai_knowledge}
-
-WiKi knowledge: {wiki_knowledge}
-
-web knowledge: {web_knowledge}
-
-{format_instruction}
-
-output:"""
+agent_template = """你是一名专业的事实核查机构编辑，给定如下的推文文本内容 \
+以及推文图片路径，请首先将内容分解为待核查的子问题清单:
+1. xxx
+2. xxx
+...
+随后借助工具，逐一核查子问题是否真实，并给出你的判断依据。 \
+所有子问题核查结束后，请用“核查结束：(你的结论)”结尾。
+当前日期：{date}
+待核查文本：{tweet_text}
+待核查图片：{tweet_image_name}"""
 
 agent_prompt = PromptTemplate(
-    template=template,
-    input_variables=[
-        "claim",
-        "image_caption",
-        "ai_knowledge",
-        "wiki_knowledge",
-        "web_knowledge",
-        "real_prob",
-        "fake_prob",
-    ],
-    partial_variables={
-        "format_instruction": parser.get_format_instructions(),
-        "time": datetime.now().strftime("%Y-%m-%d"),
-    },
-)
-
-
-def get_fact_checker_chain():
-    chain = (
-        agent_prompt
-        | ChatOpenAI(
-            temperature=0.7,
-            model_name=config.model_name,
-            streaming=True,
-        )
-        | parser
-    )
-    return chain
-
-
-agent_template = """You are a professional fact checker. Given the following tweet text \
-and tweet image path, please judge whether the tweet is true or false and \
-give your reasons step by step. Current date: {date}
-tweet text: {tweet_text}
-tweet image path: {tweet_image_path}"""
-
-agent_prompt = PromptTemplate(
-    input_variables=["tweet_text", "tweet_image_path"],
+    input_variables=["tweet_text", "tweet_image_name"],
     template=agent_template,
     partial_variables={
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -99,35 +42,80 @@ agent_prompt = PromptTemplate(
 )
 
 
+class AgentState(TypedDict):
+    input: str
+    chat_history: list[BaseMessage]
+    agent_outcome: AgentAction | AgentFinish | None
+    intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
+
+
 def get_fact_checker_agent(tools):
+    tool_executor = ToolExecutor(tools)
     llm = ChatOpenAI(
-        temperature=0.7,
         model_name=config.model_name,
         streaming=True,
     )
-    prompt = hub.pull("hwchase17/react-json")
-    prompt = prompt.partial(
-        tools=render_text_description_and_args(tools),
-        tool_names=", ".join([t.name for t in tools]),
+    with open(ROOT / "prompt" / "openai-tools-agent.json") as f:
+        prompt_raw = json.load(f)
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", prompt_raw["system"]),
+            MessagesPlaceholder("chat_history", optional=True),
+            ("human", prompt_raw["human"]),
+            MessagesPlaceholder("agent_scratchpad"),
+        ]
     )
-    llm_with_stop = llm.bind(stop=["\nObservation"])
-    agent = (
+    agent = create_openai_tools_agent(llm, tools, prompt)
+
+    async def init_agent(data):
+        inputs = data["input"]
+        msg = await agent_prompt.ainvoke(inputs)
+        return {"input": msg.text, "intermediate_steps": [], "chat_history": []}
+
+    async def run_agent(data):
+        agent_outcome = await agent.ainvoke(data)
+        return {"agent_outcome": agent_outcome}
+
+    async def execute_tools(data):
+        agent_actions = data["agent_outcome"]
+        steps = []
+        for action in agent_actions:
+            output = await tool_executor.ainvoke(action)
+            steps.append((action, str(output)))
+        agent_actions.clear()
+        return {"intermediate_steps": steps}
+
+    def should_continue(data):
+        if isinstance(data["agent_outcome"], AgentFinish):
+            if "核查结束" in data["agent_outcome"].messages[0].content:
+                return "end"
+            else:
+                return "agent"
+        else:
+            return "continue"
+
+    # Define a new graph
+    workflow = StateGraph(AgentState)
+
+    workflow.add_node("start", init_agent)
+    workflow.add_node("agent", run_agent)
+    workflow.add_node("action", execute_tools)
+
+    workflow.set_entry_point("start")
+
+    workflow.add_conditional_edges(
+        "agent",
+        should_continue,
         {
-            "input": lambda x: x["input"],
-            "agent_scratchpad": lambda x: format_log_to_str(x["intermediate_steps"]),
-        }
-        | prompt
-        | llm_with_stop
-        | ReActJsonSingleInputOutputParser()
+            "continue": "action",
+            "agent": "agent",
+            "end": END,
+        },
     )
-    chain = (
-        agent_prompt
-        | {"input": lambda x: x}
-        | AgentExecutor(
-            agent=agent,
-            tools=tools,
-            verbose=True,
-            handle_parsing_errors="Check your output and make sure it conforms!\n",
-        )
-    )
-    return chain
+
+    workflow.add_edge("start", "agent")
+    workflow.add_edge("action", "agent")
+
+    app = workflow.compile()
+
+    return app

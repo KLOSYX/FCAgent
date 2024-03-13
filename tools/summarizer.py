@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
+from langchain_openai.chat_models import ChatOpenAI
 
-template = """claim: {claim_text}
+from config import config
 
-info: {history}
+template = """推文内容: {claim_text}
 
-You are an editor of a fact-check agency, and you need to release a fact-checking article \
-based on the information above, and provide your judgment on the authenticity of social media tweet.
-Your output must include two parts in the following format:
-- Rating: (True/False/Uncertain)
-- Comment: (Your fact-checking article. Should be professional and rational.)
-Now please give your rating and comment:
+核查过程: {history}
+
+你是一名人类事实核查机构的编辑，你需要根据上面的信息撰写一篇简短的事实核查新闻，并需要给出你对于社交媒体信息真实性的判断。\
+你的输出必须包括三个部分，格式如下：
+- 评价：（真实/虚假/有待核实/半真半假）
+- 点评：（你的事实核查新闻，详尽分点叙述，保持专业理性的风格。你需要隐藏工具的名称和具体使用细节）
+- 参考资料：（列出权威可靠来源的参考资料，以[标题](链接)的格式输出）
+现在请按照上面的格式输出，请用中文和markdown格式输出：
 """
 
 prompt = PromptTemplate(
@@ -22,5 +24,5 @@ prompt = PromptTemplate(
 
 
 def get_summarizer_chain():
-    chain = prompt | ChatOpenAI(temperature=0.7, streaming=True)
+    chain = prompt | ChatOpenAI(model_name=config.model_name, temperature=0.7, streaming=True)
     return chain

@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 import requests
 from langchain.tools import BaseTool
+from pydantic import BaseModel, Field
 
 from config import config
 
@@ -18,11 +19,16 @@ def get_wiki_result(key_words: str) -> list[str]:
     return result
 
 
+class WikipediaInput(BaseModel):
+    query: str = Field(description="Query string. Should be in English.")
+
+
 class WikipediaTool(BaseTool):
-    name = "en_wikipedia_tool"
+    name = "ask_wikipedia"
+    cn_name = "维基百科"
     description = "use this tool when you need to retrieve knowledge from Wikipedia. \
-    note that knowledge may be out of date, but it is certainly correct. \
-    the query MUST be in English. use parameter `query` as input."
+    note that knowledge may be out of date, but it is certainly correct."
+    args_schema = WikipediaInput
 
     def _run(self, query: str) -> str:
         """use string 'query' as input.

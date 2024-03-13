@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from langchain.chains import create_extraction_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import AsyncHtmlLoader
-from langchain.document_transformers import Html2TextTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools import BaseTool
+from langchain_community.document_loaders import AsyncHtmlLoader
+from langchain_community.document_transformers import Html2TextTransformer
+from langchain_openai.chat_models import ChatOpenAI
+from pydantic import BaseModel, Field
 
 from config import config
 
@@ -21,7 +22,7 @@ schema = {
 
 
 def extract(content: str, schema: dict, llm: Any):
-    return create_extraction_chain(schema=schema, llm=llm).run(content)
+    return create_extraction_chain(schema=schema, llm=llm).invoke(content)
 
 
 def get_web_content_from_url(urls: list[str]):
@@ -43,13 +44,19 @@ def get_web_content_from_url(urls: list[str]):
             content=split.page_content,
             llm=llm,
         )
-        results.extend(extracted_content)
+        results.extend(extracted_content["text"])
     return results
 
 
+class WebBrowsingInput(BaseModel):
+    url: str = Field(description="url of the web page")
+
+
 class WebBrowsingTool(BaseTool):
-    name = "web_browsing_tool"
-    description = "Use this tool to obtain content of web pages" "use parameter `url` as input"
+    name = "browse"
+    cn_name = "网页浏览"
+    description = "Use this tool to obtain content of web pages"
+    args_schema: type[BaseModel] = WebBrowsingInput
 
     def _run(self, url: str) -> str:
         web_content = get_web_content_from_url([url])
