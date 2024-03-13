@@ -43,7 +43,7 @@ def generate_filename_from_image(image):
 
 
 async def inference(
-    raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]
+        raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]
 ):
     tmp_dir = root / ".temp"
     if not tmp_dir.exists():
@@ -62,37 +62,52 @@ async def inference(
     all_tool_names = [t.name for t in all_tools]
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
-    async for chunk in agent.astream_log(
-        {
-            "input": {
-                "tweet_text": claim,
-                "tweet_image_name": image_name if raw_image is not None else "No image.",
-            }
-        }
+    async for event in agent.astream_events(
+            {
+                "input": {
+                    "tweet_text": claim,
+                    "tweet_image_name": image_name if raw_image is not None else "No image.",
+                }
+            }, version="v1",
     ):
-        for op in chunk.ops:
-            if op["path"].startswith("/logs/"):
-                if (
-                    op["path"].endswith("final_output")
-                    and op["path"].split("/")[-2].split(":")[0] in all_tool_names
-                ):
-                    tool_name = op["path"].split("/")[-2].split(":")[0]
-                    if op["value"] is not None:
-                        partial_message += f"\n> {tool_name}输出：{str(op['value']['output'])} \n\n"
-                elif op["path"].endswith(
-                    "/streamed_output_str/-",
-                ):
-                    partial_message += op["value"]
-                    if partial_message.endswith("```"):
-                        partial_message += "\n"
+        kind = event["event"]
+        if kind == "on_chat_model_stream":
+            content = event["data"]["chunk"].content
+            if content:
+                partial_message += content
+                if partial_message.endswith("```"):
+                    partial_message += "\n"
                 yield partial_message
+        elif kind == "on_tool_start":
+            content = f"\n\n> 调用工具：{event['name']}\t输入: {event['data'].get('input')}\n\n"
+            partial_message += content
+            yield partial_message
+        elif kind == "on_tool_end":
+            partial_message += f"\n\n> 工具输出：{event['data'].get('output')}\n\n"
+            yield partial_message
+        # for op in chunk.ops:
+        #     if op["path"].startswith("/logs/"):
+        #         if (
+        #                 op["path"].endswith("final_output")
+        #                 and op["path"].split("/")[-2].split(":")[0] in all_tool_names
+        #         ):
+        #             tool_name = op["path"].split("/")[-2].split(":")[0]
+        #             if op["value"] is not None:
+        #                 partial_message += f"\n> {tool_name}输出：{str(op['value']['output'])} \n\n"
+        #         elif op["path"].endswith(
+        #                 "/streamed_output_str/-",
+        #         ):
+        #             partial_message += op["value"]
+        #             if partial_message.endswith("```"):
+        #                 partial_message += "\n"
+        #         yield partial_message
     partial_message += "\n\n---\n\n"
     summarizer = get_summarizer_chain()
     async for chunk in summarizer.astream(
-        {
-            "claim_text": claim,
-            "history": partial_message,
-        },
+            {
+                "claim_text": claim,
+                "history": partial_message,
+            },
     ):
         partial_message += chunk.content
         yield partial_message
