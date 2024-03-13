@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import gradio as gr
@@ -62,14 +63,14 @@ async def inference(
             yield partial_message
     partial_message += "\n\n---\n\n"
     summarizer = get_summarizer_chain()
-    async for chunk in summarizer.astream(
+    result = await summarizer.ainvoke(
         {
             "claim_text": claim,
             "history": partial_message,
         },
-    ):
-        partial_message += chunk.content
-        yield partial_message
+    )
+    partial_message += f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
+    yield partial_message
 
 
 if __name__ == "__main__":

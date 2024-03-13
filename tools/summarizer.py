@@ -1,28 +1,40 @@
 from __future__ import annotations
 
+from enum import Enum
+from typing import Literal
+
 from langchain.prompts import PromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai.chat_models import ChatOpenAI
 
 from config import config
+from utils.pydantic import PydanticOutputParser
 
 template = """推文内容: {claim_text}
 
 核查过程: {history}
 
-你是一名人类事实核查机构的编辑，你需要根据上面的信息撰写一篇简短的事实核查新闻，并需要给出你对于社交媒体信息真实性的判断。\
-你的输出必须包括三个部分，格式如下：
-- 评价：（真实/虚假/有待核实/半真半假）
-- 点评：（你的事实核查新闻，详尽分点叙述，保持专业理性的风格。你需要隐藏工具的名称和具体使用细节）
-- 参考资料：（权威可靠来源的参考资料，以[标题](链接)的格式输出；如没有参考资料，填“无”）
-现在请按照上面的格式输出，请用中文和markdown格式输出：
+你是一名人类事实核查机构的编辑，你需要根据总结上面的信息。\
+{format_instructions}
 """
+
+
+class SummarizerScheme(BaseModel):
+    rank: Literal["真实", "虚假", "有待核实", "真假参半"] = Field(description="核查过程的结论")
+    procedure: str = Field(description="核查过程的过程")
+    reference: list[tuple[
+        str, str]] = Field(description="权威可靠来源的参考资料列表，以“(title, url)”的格式输出；如没有参考资料，返回空列表")
+
+
+parser = PydanticOutputParser(pydantic_object=SummarizerScheme)
+
 
 prompt = PromptTemplate(
     template=template,
     input_variables=["claim_text", "history"],
-)
+).partial(format_instructions=parser.get_format_instructions())
 
 
 def get_summarizer_chain():
-    chain = prompt | ChatOpenAI(model_name=config.model_name, temperature=0.7, streaming=True)
+    chain = prompt | ChatOpenAI(model_name=config.model_name, streaming=False) | parser
     return chain
