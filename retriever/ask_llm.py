@@ -3,55 +3,68 @@ from __future__ import annotations
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai.chat_models import ChatOpenAI
-from pydantic import BaseModel, Field
 
 template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want \
 to verify the authenticity of the tweet and you are responsible for providing knowledge that can support/refute the \
 content of the tweet. The knowledge must be true and reliable, so if you don't have the relevant knowledge, please \
 don't provide it.
+{format_instructions}
 ---
 text: {text_input}
 output: (list in Markdown format)"""
 
+
+class Answer(BaseModel):
+    knowledge_list: list[str] = Field(description="List of knowledge string.")
+
+
+# Set up a parser
+parser = PydanticOutputParser(pydantic_object=Answer)
+
 prompt = PromptTemplate(
     template=template,
     input_variables=["text_input"],
-)
+).partial(format_instructions=parser.get_format_instructions())
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | ChatOpenAI(temperature=0.0, streaming=False)
+    chain = prompt | ChatOpenAI(temperature=0.0, streaming=False) | parser
     return chain
 
 
-class ClosedBookInput(BaseModel):
+class AskLlmInput(BaseModel):
     query: str = Field(description="The query to search closed book. Should be any language.")
 
 
-class ClosedBookTool(BaseTool):
+class AskLlmTool(BaseTool):
     name = "ask_llm"
     cn_name = "大模型"
     description = (
         "use this tool when you need to search for knowledge within ChatGPT, "
         "note that the knowledge you get is relatively unreliable but will be more specific."
     )
-    args_schema: type[BaseModel] = ClosedBookInput
+    args_schema: type[BaseModel] = AskLlmInput
 
     def _run(self, query: str):
         return (
-            "\n".join(
+            "\t".join(
                 f"{i}. {s}"
-                for i, s in enumerate(get_closed_knowledge_chain().invoke({"text_input": query}))
+                for i, s in enumerate(
+                    get_closed_knowledge_chain().invoke({"text_input": query}).knowledge_list
+                )
             )
             + "\n"
         )
 
     async def _arun(self, query: str):
         return (
-            "\n".join(
+            "\t".join(
                 f"{i}. {s}"
-                for i, s in enumerate(get_closed_knowledge_chain().invoke({"text_input": query}))
+                for i, s in enumerate(
+                    get_closed_knowledge_chain().invoke({"text_input": query}).knowledge_list
+                )
             )
             + "\n"
         )
