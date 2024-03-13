@@ -31,25 +31,33 @@ vl_server_addr = "http://localhost:8001"
 model_name = "gpt-4"
 ```
 
-## Fact Checking
+## Fact-checking module (fact_checker/__init__.py)
 
-The fact-checking module provides a `FactChecker` class and a method to obtain a fact-checking agent which can be used to verify the authenticity of information within tweets.
+This module defines the workflow of a fact-checking bot, including an Agent that uses OpenAI tools and a series of tool executors for analyzing and verifying textual content and pictures. The workflow includes initializing the Agent, running the Agent, executing the tools, and determining whether to continue or end the execution. Also, a statechart is defined to manage the whole process.
 
 ## Retrievers
 
 The retrievers are responsible for fetching information from different sources:
 
 - `closed_book_knowledge.py`: Searches for knowledge within the closed book knowledge base.
-- `query_generation_agent.py`: Generates queries for information retrieval.
 - `web_search.py`: Searches the web using the DuckDuckGo search engine.
-- `wiki_knowledge.py`: Retrieves information from Wikipedia.
+- `wikipedia.py`: tool for retrieving knowledge from Wikipedia.
+- `__init__.py`: defines the retriever function module and loads the base tools
 
 ## Tools
 
 Two main tools are included:
 
 - `fake_news_detection_tool.py`: Detects fake news by analyzing tweet text.
-- `multi_modal_content_comprehending.py`: Comprehends and describes the content of images associated with tweets.
+- `image_comprehending.py`: processes the content of tweets containing images to generate text descriptions.
+- `image_qa.py`: handles the functionality of the image quiz tool.
+- `summarizer.py`: implements the functionality of the summary text generator.
+- `web_browsing.py`: tool module for fetching content from web pages.
+- `__init__.py`: loads the list of base tools and defines the public interface.
+
+### Tools module (utils/__init__.py)
+
+This module defines a `load_base_tools` function that loads all instances of classes inherited from `BaseTool` in the specified directory.
 
 ## Usage
 
