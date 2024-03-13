@@ -26,12 +26,12 @@ agent_template = """你是一名专业的事实核查机构编辑，给定如下
 以及推文图片路径，请首先将内容分解为待核查的子问题清单:
 1. xxx
 2. xxx
-3. ...
+...
 随后借助工具，逐一核查子问题是否真实，并给出你的判断依据。 \
 所有子问题核查结束后，请用“核查结束：(你的结论)”结尾。
 当前日期：{date}
-tweet_text：{tweet_text}
-tweet_image_name：{tweet_image_name}"""
+待核查文本：{tweet_text}
+待核查图片：{tweet_image_name}"""
 
 agent_prompt = PromptTemplate(
     input_variables=["tweet_text", "tweet_image_name"],
