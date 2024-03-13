@@ -38,6 +38,7 @@ class WebSearchInput(BaseModel):
 class WebSearchTool(BaseTool):
     name = "web_search"
     cn_name = "网页搜索"
+    is_multimodal: bool = False
     description = "use this tool when you need to search web page."
     args_schema: type[BaseModel] = WebSearchInput
 

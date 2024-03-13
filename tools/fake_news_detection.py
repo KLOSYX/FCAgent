@@ -47,6 +47,7 @@ class FNDScheme(BaseModel):
 class FakeNewsDetectionTool(BaseTool):
     name = "predict"
     cn_name = "预测模型"
+    is_multimodal: bool = True
     description = (
         "use this tool to get machine learning model prediction whether a tweet is true/false. "
         "CANNOT be used as the only indicator. "

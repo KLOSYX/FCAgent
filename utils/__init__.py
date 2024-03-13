@@ -24,8 +24,11 @@ def load_base_tools(directory: str) -> list[BaseTool]:
         except AttributeError:
             continue
         if issubclass(cls, BaseTool):
-            all_instance.append(cls())
-    return all_instance
+            instance = cls()
+            assert hasattr(instance, "cn_name"), f"{cls} must have a cn_name attribute"
+            assert hasattr(instance, "is_multimodal"), f"{cls} must have a is_multimodal attribute"
+            all_instance.append(instance)
+    return sorted(all_instance, key=lambda x: x.cn_name)
 
 
 def list_to_markdown(lst):

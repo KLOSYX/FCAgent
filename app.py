@@ -33,7 +33,7 @@ async def inference(
         retriever_map[x] for x in selected_retrievers
     ]
     if raw_image is None:
-        all_tools = list(filter(lambda x: "image" not in x.name.lower(), all_tools))
+        all_tools = list(filter(lambda x: not x.is_multimodal, all_tools))
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
     async for event in agent.astream_events(

@@ -62,6 +62,7 @@ class ImageQaScheme(BaseModel):
 class ImageQaTool(BaseTool):
     name = "ask_image"
     cn_name = "图像问答"
+    is_multimodal: bool = True
     description = "Use this tool to ask any question about the tweet image content"
     args_schema: type[ImageQaScheme] = ImageQaScheme
 

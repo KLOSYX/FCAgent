@@ -41,6 +41,7 @@ class AskLlmInput(BaseModel):
 class AskLlmTool(BaseTool):
     name = "ask_llm"
     cn_name = "大模型"
+    is_multimodal: bool = False
     description = (
         "use this tool when you need to search for knowledge within ChatGPT, "
         "note that the knowledge you get is relatively unreliable but will be more specific."

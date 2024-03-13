@@ -55,6 +55,7 @@ class WebBrowsingInput(BaseModel):
 class WebBrowsingTool(BaseTool):
     name = "browse"
     cn_name = "网页浏览"
+    is_multimodal: bool = False
     description = "Use this tool to obtain content of web pages"
     args_schema: type[BaseModel] = WebBrowsingInput
 
