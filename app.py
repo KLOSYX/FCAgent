@@ -61,7 +61,6 @@ async def inference(
         elif kind == "on_tool_end":
             partial_message += f"\n\n> 工具输出：{event['data'].get('output')}\n\n"
             yield partial_message
-    partial_message += "\n\n---\n\n"
     summarizer = get_summarizer_chain()
     result = await summarizer.ainvoke(
         {
@@ -69,6 +68,7 @@ async def inference(
             "history": partial_message,
         },
     )
+    partial_message += "\n\n---\n\n"
     partial_message += f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
     yield partial_message
 

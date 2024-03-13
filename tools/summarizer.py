@@ -5,7 +5,7 @@ from typing import Literal
 
 from langchain.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_openai.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 
 from config import config
 from utils.pydantic import PydanticOutputParser
@@ -22,8 +22,9 @@ template = """推文内容: {claim_text}
 class SummarizerScheme(BaseModel):
     rank: Literal["真实", "虚假", "有待核实", "真假参半"] = Field(description="核查过程的结论")
     procedure: str = Field(description="核查过程的过程")
-    reference: list[tuple[
-        str, str]] = Field(description="权威可靠来源的参考资料列表，以“(title, url)”的格式输出；如没有参考资料，返回空列表")
+    reference: list[tuple[str, str]] = Field(
+        description="权威可靠来源的参考资料列表，以“(title, url)”的格式输出；如没有参考资料，返回空列表"
+    )
 
 
 parser = PydanticOutputParser(pydantic_object=SummarizerScheme)

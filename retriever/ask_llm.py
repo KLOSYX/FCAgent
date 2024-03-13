@@ -3,7 +3,7 @@ from __future__ import annotations
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_openai.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 
 from utils.pydantic import PydanticOutputParser
 
