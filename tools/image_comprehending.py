@@ -63,6 +63,7 @@ class ImageScheme(BaseModel):
 class ImageComprehendingTool(BaseTool):
     name = "caption_image"
     cn_name = "图像描述"
+    is_multimodal: bool = True
     description = "Use this tool to obtain text descriptions of tweet image content"
     args_schema: type[ImageScheme] = ImageScheme
 

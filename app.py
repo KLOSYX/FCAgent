@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import hashlib
-from io import BytesIO
+import json
 from typing import Any
 
 import gradio as gr
@@ -11,35 +10,12 @@ from fact_checker import get_fact_checker_agent
 from retriever import RETRIEVER_LIST
 from tools import TOOL_LIST
 from tools.summarizer import get_summarizer_chain
+from utils import generate_filename_from_image
 
 root = setup_root(".", pythonpath=True, dotenv=True)
 
 tool_map = {x.cn_name: x for x in TOOL_LIST}
 retriever_map = {x.cn_name: x for x in RETRIEVER_LIST}
-
-
-def list_to_markdown(lst):
-    markdown = ""
-    for item in lst:
-        markdown += f"- {item}\n"
-    return markdown
-
-
-def generate_filename_from_image(image):
-    # 创建一个BytesIO对象，用于保存图像的二进制数据
-    img_byte_arr = BytesIO()
-    # 将图像保存到BytesIO对象中（这里以PNG格式为例）
-    image.save(img_byte_arr, format="PNG")
-    # 获取图像的二进制数据
-    img_byte_arr = img_byte_arr.getvalue()
-    # 使用sha256哈希算法
-    hasher = hashlib.md5()
-    # 更新哈希值
-    hasher.update(img_byte_arr)
-    # 获取十六进制格式的哈希值
-    hash_value = hasher.hexdigest()[:8]
-    # 根据需要添加文件扩展名（这里以.png为例）
-    return str(hash_value)
 
 
 async def inference(
@@ -58,7 +34,7 @@ async def inference(
         retriever_map[x] for x in selected_retrievers
     ]
     if raw_image is None:
-        all_tools = list(filter(lambda x: "image" not in x.name.lower(), all_tools))
+        all_tools = list(filter(lambda x: not x.is_multimodal, all_tools))
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
     async for event in agent.astream_events(
@@ -85,16 +61,16 @@ async def inference(
         elif kind == "on_tool_end":
             partial_message += f"\n\n> 工具输出：{event['data'].get('output')}\n\n"
             yield partial_message
-    partial_message += "\n\n---\n\n"
     summarizer = get_summarizer_chain()
-    async for chunk in summarizer.astream(
+    result = await summarizer.ainvoke(
         {
             "claim_text": claim,
             "history": partial_message,
         },
-    ):
-        partial_message += chunk.content
-        yield partial_message
+    )
+    partial_message += "\n\n---\n\n"
+    partial_message += f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
+    yield partial_message
 
 
 if __name__ == "__main__":

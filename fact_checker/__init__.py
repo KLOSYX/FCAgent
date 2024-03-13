@@ -10,7 +10,7 @@ from langchain.prompts import MessagesPlaceholder, PromptTemplate
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt.tool_executor import ToolExecutor
 from pyrootutils import setup_root

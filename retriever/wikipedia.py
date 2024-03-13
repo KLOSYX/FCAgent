@@ -26,6 +26,7 @@ class WikipediaInput(BaseModel):
 class WikipediaTool(BaseTool):
     name = "ask_wikipedia"
     cn_name = "维基百科"
+    is_multimodal: bool = False
     description = "use this tool when you need to retrieve knowledge from Wikipedia. \
     note that knowledge may be out of date, but it is certainly correct."
     args_schema = WikipediaInput

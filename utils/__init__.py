@@ -1,4 +1,6 @@
+import hashlib
 import importlib
+from io import BytesIO
 
 from langchain.tools import BaseTool
 from pyrootutils import setup_root
@@ -22,5 +24,25 @@ def load_base_tools(directory: str) -> list[BaseTool]:
         except AttributeError:
             continue
         if issubclass(cls, BaseTool):
-            all_instance.append(cls())
-    return all_instance
+            instance = cls()
+            assert hasattr(instance, "cn_name"), f"{cls} must have a cn_name attribute"
+            assert hasattr(instance, "is_multimodal"), f"{cls} must have a is_multimodal attribute"
+            all_instance.append(instance)
+    return sorted(all_instance, key=lambda x: x.cn_name)
+
+
+def list_to_markdown(lst):
+    markdown = ""
+    for item in lst:
+        markdown += f"- {item}\n"
+    return markdown
+
+
+def generate_filename_from_image(image):
+    img_byte_arr = BytesIO()
+    image.save(img_byte_arr, format="PNG")
+    img_byte_arr = img_byte_arr.getvalue()
+    hasher = hashlib.md5()
+    hasher.update(img_byte_arr)
+    hash_value = hasher.hexdigest()[:8]
+    return str(hash_value)
