@@ -12,7 +12,7 @@ content of the tweet. The knowledge must be true and reliable, so if you don't h
 don't provide it.
 ---
 text: {text_input}
-output: """
+output: (list in Markdown format)"""
 
 prompt = PromptTemplate(
     template=template,
@@ -21,7 +21,7 @@ prompt = PromptTemplate(
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | ChatOpenAI(temperature=0.0, streaming=True)
+    chain = prompt | ChatOpenAI(temperature=0.0, streaming=False)
     return chain
 
 

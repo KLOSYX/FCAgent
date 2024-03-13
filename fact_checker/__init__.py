@@ -27,8 +27,8 @@ agent_template = """你是一名专业的事实核查机构编辑，给定如下
 1. xxx
 2. xxx
 3. ...
-随后逐一核查子问题是否真实，并给出你的判断依据。 \
-所有子问题核查结束后，请用“核查结束：(你的结论(真实/虚假/有待核查))”结尾。
+随后借助工具，逐一核查子问题是否真实，并给出你的判断依据。 \
+所有子问题核查结束后，请用“核查结束：(你的结论)”结尾。
 当前日期：{date}
 tweet_text：{tweet_text}
 tweet_image_name：{tweet_image_name}"""
@@ -67,22 +67,22 @@ def get_fact_checker_agent(tools):
     )
     agent = create_openai_tools_agent(llm, tools, prompt)
 
-    def init_agent(data):
+    async def init_agent(data):
         inputs = data["input"]
-        msg = agent_prompt.invoke(inputs).text
-        return {"input": msg, "intermediate_steps": [], "chat_history": []}
+        msg = await agent_prompt.ainvoke(inputs)
+        return {"input": msg.text, "intermediate_steps": [], "chat_history": []}
 
-    def run_agent(data):
-        agent_outcome = agent.invoke(data)
+    async def run_agent(data):
+        agent_outcome = await agent.ainvoke(data)
         return {"agent_outcome": agent_outcome}
 
-    def execute_tools(data):
+    async def execute_tools(data):
         agent_actions = data["agent_outcome"]
         steps = []
-        while agent_actions:
-            output = tool_executor.invoke(agent_actions[0])
-            steps.append((agent_actions[0], str(output)))
-            agent_actions.pop(0)
+        for action in agent_actions:
+            output = await tool_executor.ainvoke(action)
+            steps.append((action, str(output)))
+        agent_actions.clear()
         return {"intermediate_steps": steps}
 
     def should_continue(data):

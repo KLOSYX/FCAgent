@@ -72,22 +72,19 @@ async def inference(
     ):
         for op in chunk.ops:
             if op["path"].startswith("/logs/"):
-                if op["path"].endswith(
-                    "/streamed_output_str/-",
-                ):
-                    # because we chose to only include LLMs, these are LLM tokens
-                    partial_message += op["value"]
-                    if partial_message.endswith("```"):
-                        partial_message += "\n"
-                elif (
+                if (
                     op["path"].endswith("final_output")
                     and op["path"].split("/")[-2].split(":")[0] in all_tool_names
                 ):
                     tool_name = op["path"].split("/")[-2].split(":")[0]
                     if op["value"] is not None:
                         partial_message += f"\n> {tool_name}输出：{str(op['value']['output'])} \n\n"
-                # else:
-                #     partial_message += "\n\n" + str(op["path"]) + str(op["value"]) + "\n\n"
+                elif op["path"].endswith(
+                    "/streamed_output_str/-",
+                ):
+                    partial_message += op["value"]
+                    if partial_message.endswith("```"):
+                        partial_message += "\n"
                 yield partial_message
     partial_message += "\n\n---\n\n"
     summarizer = get_summarizer_chain()
