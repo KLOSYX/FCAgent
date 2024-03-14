@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
 from config import config
+from utils.gpt4v import request_gpt4v
 
 root = setup_root(".")
 
@@ -72,13 +73,20 @@ class ImageComprehendingTool(BaseTool):
 
         could be in English and Chinese.
         """
-        image_content = load_tweet_content(image_name)
-        return get_vl_result(image_content) + "\n"
+        if config.vl_model_type == "gpt4v":
+            resp = request_gpt4v(root / ".temp" / image_name, template) + "\n"
+        else:
+            image_content = load_tweet_content(image_name)
+            resp = get_vl_result(image_content) + "\n"
+        return resp
 
     async def _arun(self, image_name: str) -> str:
         image_content = load_tweet_content(image_name)
         res = ""
-        async for token in stream_get_vl_result(image_content):
-            res = token
-            print("\r" + token, flush=True, end="")
+        if config.vl_model_type == "gpt4v":
+            res = request_gpt4v(root / ".temp" / image_name, template) + "\n"
+        else:
+            async for token in stream_get_vl_result(image_content):
+                res = token
+                print("\r" + token, flush=True, end="")
         return res + "\n"
