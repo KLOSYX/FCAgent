@@ -31,15 +31,23 @@ config = Config()
 ROOT = setup_root(".")
 
 agent_template = """你是一名专业的事实核查机构编辑，给定如下的推文文本内容\
-以及推文图片路径，请借助工具，核查问题是否真实，并给出你的判断依据。\
+以及推文图片名称，请借助工具，核查问题是否真实，并给出你的判断依据。\
 核查结束后，请用“核查结束：(你的结论)”结尾。
 当前日期：{date}
 待核查文本：{tweet_text}
 待核查图片：{tweet_image_name}"""
 
+en_agent_template = """You are a professional fact checking agency editor, providing the following tweet text content \
+as well as the tweet image name, please use tools to verify whether the claim is true or false and provide your \
+judgment basis.
+Current date: {date}
+Text to be verified: {tweet_text}
+Image to be verified: {tweet_image_name}
+"""
+
 agent_prompt = PromptTemplate(
     input_variables=["tweet_text", "tweet_image_name"],
-    template=agent_template,
+    template=en_agent_template,
     partial_variables={
         "date": datetime.now().strftime("%Y-%m-%d"),
     },
@@ -90,7 +98,7 @@ def _get_agent(agent_name: str, llm, tools):
         )
         return create_structured_chat_agent(llm, tools, prompt)
     elif agent_name == "shoggoth13_react_json":
-        llm.bind(stop=["\nObservation"])
+        llm.bind(stop=["Observation"])
         with open(ROOT / "prompt" / "shoggoth13_react_json.json") as f:
             prompt_raw = json.load(f)
         prompt = ChatPromptTemplate.from_messages(
@@ -139,10 +147,12 @@ def get_fact_checker_agent(tools):
         steps = []
         if isinstance(agent_actions, list):
             for action in agent_actions:
+                if not isinstance(action, AgentAction):
+                    continue
                 output = await tool_executor.ainvoke(action)
                 steps.append((action, str(output)))
             agent_actions.clear()
-        else:
+        elif isinstance(agent_actions, AgentAction):
             output = await tool_executor.ainvoke(agent_actions)
             steps.append((agent_actions, str(output)))
             data["agent_outcome"] = None
