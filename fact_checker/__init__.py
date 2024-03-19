@@ -27,7 +27,6 @@ from config import Config
 
 __all__ = ["get_fact_checker_agent"]
 config = Config()
-logger.level(config.log_level)
 
 ROOT = setup_root(".")
 

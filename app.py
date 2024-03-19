@@ -4,8 +4,10 @@ import json
 from typing import Any
 
 import gradio as gr
+from loguru import logger
 from pyrootutils import setup_root
 
+from config import config
 from fact_checker import get_fact_checker_agent
 from retriever import RETRIEVER_LIST
 from tools import TOOL_LIST
@@ -13,6 +15,7 @@ from tools.summarizer import get_summarizer_chain
 from utils import generate_filename_from_image
 
 root = setup_root(".", pythonpath=True, dotenv=True)
+logger.level(config.log_level)
 
 tool_map = {x.cn_name: x for x in TOOL_LIST}
 retriever_map = {x.cn_name: x for x in RETRIEVER_LIST}
