@@ -62,7 +62,9 @@ async def inference(
             partial_message += content
             yield partial_message
         elif kind == "on_tool_end":
-            partial_message += f"\n\n> 工具输出：{event['data'].get('output')}\n\n"
+            tool_output = event["data"].get("output")
+            tool_output = tool_output.replace("\n\n", "\n")
+            partial_message += f"\n\n> 工具输出：{tool_output}\n\n"
             yield partial_message
     summarizer = get_summarizer_chain()
     result = await summarizer.ainvoke(

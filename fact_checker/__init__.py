@@ -24,6 +24,7 @@ from loguru import logger
 from pyrootutils import setup_root
 
 from config import Config
+from utils import react_chat
 
 __all__ = ["get_fact_checker_agent"]
 config = Config()
