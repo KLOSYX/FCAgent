@@ -9,5 +9,7 @@ Pillow==10.2.0
 pydantic==2.5.2
 pyrootutils==1.0.4
 requests==2.31.0
+agents_deconstructed
+loguru==0.7.2
 
 aiohttp~=3.9.4rc0
