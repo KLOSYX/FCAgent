@@ -19,7 +19,7 @@ class Config:
     vl_model_type: Literal["local", "gpt4v"] = "gpt4v"
     vl_server_addr: str = "http://10.26.128.30:8001"
     model_name: str = "gpt-3.5-turbo"
-    search_engine: str = "bing"
+    search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
     web_scrapy_max_splits: int = 3
 
 
