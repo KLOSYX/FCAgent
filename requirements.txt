@@ -1,4 +1,4 @@
-duckduckgo-search==3.9.9
+duckduckgo-search>=5.1.0
 google-api-python-client>=2.100.0
 gradio==4.19.2
 html2text
