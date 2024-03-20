@@ -21,6 +21,11 @@ tool_map = {x.cn_name: x for x in TOOL_LIST}
 retriever_map = {x.cn_name: x for x in RETRIEVER_LIST}
 
 
+def format_markdown(text: str) -> str:
+    text = text.replace("```", "")
+    return text
+
+
 async def inference(
     raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]
 ):
@@ -54,28 +59,27 @@ async def inference(
             content = event["data"]["chunk"].content
             if content:
                 partial_message += content
-                if partial_message.endswith("```"):
-                    partial_message += "\n"
-                yield partial_message
+                yield format_markdown(partial_message)
         elif kind == "on_tool_start":
             content = f"\n\n> 调用工具：{event['name']}\t输入: {event['data'].get('input')}\n\n"
             partial_message += content
-            yield partial_message
+            yield format_markdown(partial_message)
         elif kind == "on_tool_end":
             tool_output = event["data"].get("output")
-            tool_output = tool_output.replace("\n\n", "\n")
-            partial_message += f"\n\n> 工具输出：{tool_output}\n\n"
-            yield partial_message
+            if tool_output:
+                tool_output = tool_output.replace("\n", "\t")
+                partial_message += f"\n\n> 工具输出：{tool_output}\n\n"
+            yield format_markdown(partial_message)
     summarizer = get_summarizer_chain()
     result = await summarizer.ainvoke(
         {
             "claim_text": claim,
-            "history": partial_message,
+            "history": format_markdown(partial_message),
         },
     )
     partial_message += "\n\n---\n\n"
     partial_message += f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
-    yield partial_message
+    yield format_markdown(partial_message)
 
 
 if __name__ == "__main__":
