@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import operator
 from datetime import datetime
-from typing import Annotated, TypedDict
+from typing import Annotated, TypedDict, Union
 
 from langchain.prompts import PromptTemplate
 from langchain_core.agents import AgentAction, AgentFinish
@@ -47,7 +47,7 @@ agent_prompt = PromptTemplate(
 class AgentState(TypedDict):
     input: dict | str
     chat_history: list[BaseMessage]
-    agent_outcome: list | AgentAction | AgentFinish | None
+    agent_outcome: list[AgentAction] | AgentAction | AgentFinish | None
     intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
 
 
