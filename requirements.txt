@@ -4,7 +4,7 @@ gradio==4.19.2
 html2text
 langchain==0.1.12
 langchain-openai==0.0.8
-langgraph==0.0.26
+langgraph==0.0.28
 Pillow==10.2.0
 pydantic==2.5.2
 pyrootutils==1.0.4

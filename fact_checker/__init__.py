@@ -56,10 +56,10 @@ agent_prompt = PromptTemplate(
 
 
 class AgentState(TypedDict):
-    input: str
+    input: dict | str
     chat_history: list[BaseMessage]
     agent_outcome: list | AgentAction | AgentFinish | None
-    intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
+    intermediate_steps: list[tuple[AgentAction, str]]
 
 
 def _get_agent(agent_name: str, llm, tools):
@@ -131,20 +131,20 @@ def get_fact_checker_agent(tools):
     )
     agent = _get_agent(config.agent_type, llm, tools)
 
-    async def init_agent(data):
-        inputs = data["input"]
+    async def init_agent(data: AgentState):
         logger.debug(f"init agent with agent state: {data}")
-        msg = await agent_prompt.ainvoke(inputs)
+        msg = await agent_prompt.ainvoke(data["input"])
         return {"input": msg.text, "intermediate_steps": [], "chat_history": []}
 
-    async def run_agent(data):
+    async def run_agent(data: AgentState):
         logger.debug(f"run agent with agent state: {data}")
         agent_outcome = await agent.ainvoke(data)
         return {"agent_outcome": agent_outcome}
 
-    async def execute_tools(data):
+    async def execute_tools(data: AgentState):
         logger.debug(f"execute tools with agent state: {data}")
         agent_actions = data["agent_outcome"]
+        old_steps = data.copy()["intermediate_steps"]
         steps = []
         if isinstance(agent_actions, list):
             for action in agent_actions:
@@ -152,12 +152,10 @@ def get_fact_checker_agent(tools):
                     continue
                 output = await tool_executor.ainvoke(action)
                 steps.append((action, str(output)))
-            agent_actions.clear()
         elif isinstance(agent_actions, AgentAction):
             output = await tool_executor.ainvoke(agent_actions)
             steps.append((agent_actions, str(output)))
-            data["agent_outcome"] = None
-        return {"intermediate_steps": steps}
+        return {"intermediate_steps": old_steps + steps}
 
     def should_continue(data):
         logger.debug(f"should continue with agent state: {data}")
