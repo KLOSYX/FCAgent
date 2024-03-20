@@ -10,11 +10,9 @@ from langchain_openai import ChatOpenAI
 from config import config
 from utils.pydantic import PydanticOutputParser
 
-template = """推文内容: {claim_text}
-
-核查过程: {history}
-
-你是一名人类事实核查机构的编辑，你需要根据总结上面的信息。\
+template = """核查过程: {history}
+---
+你是一名人类事实核查机构的编辑，你需要根据上面的事实核查信息，判断内容“{claim_text}”的真实性。\
 {format_instructions}
 """
 
