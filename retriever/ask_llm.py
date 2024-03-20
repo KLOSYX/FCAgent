@@ -38,7 +38,7 @@ def get_closed_knowledge_chain():
 
 
 class AskLlmInput(BaseModel):
-    query: str = Field(description="The query to search closed book. Should be any language.")
+    question: str = Field(description="The question to ask. Could be any language.")
 
 
 class AskLlmTool(BaseTool):
@@ -46,28 +46,27 @@ class AskLlmTool(BaseTool):
     cn_name = "大模型"
     is_multimodal: bool = False
     description = (
-        "use this tool when you need to search for knowledge within ChatGPT, "
-        "note that the knowledge you get is relatively unreliable but will be more specific."
+        "use this tool when you need to ask the expert, " "note that responses are less current."
     )
     args_schema: type[BaseModel] = AskLlmInput
 
-    def _run(self, query: str):
+    def _run(self, question: str):
         return (
             "\t".join(
                 f"{i}. {s}"
                 for i, s in enumerate(
-                    get_closed_knowledge_chain().invoke({"text_input": query}).knowledge_list
+                    get_closed_knowledge_chain().invoke({"text_input": question}).knowledge_list
                 )
             )
             + "\n"
         )
 
-    async def _arun(self, query: str):
+    async def _arun(self, question: str):
         return (
             "\t".join(
                 f"{i}. {s}"
                 for i, s in enumerate(
-                    get_closed_knowledge_chain().invoke({"text_input": query}).knowledge_list
+                    get_closed_knowledge_chain().invoke({"text_input": question}).knowledge_list
                 )
             )
             + "\n"
