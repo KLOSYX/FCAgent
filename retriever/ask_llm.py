@@ -5,6 +5,7 @@ from langchain.tools import BaseTool
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 
+from config import config
 from utils.pydantic import PydanticOutputParser
 
 template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want \
@@ -28,11 +29,12 @@ prompt = PromptTemplate(
     template=template,
     input_variables=["text_input"],
 ).partial(format_instructions=parser.get_format_instructions())
+llm = ChatOpenAI(model_name=config.model_name, temperature=0.0)
 
 
 def get_closed_knowledge_chain():
-    chain = prompt | ChatOpenAI(temperature=0.0, streaming=False) | parser
-    return chain
+    knowledge_chain = prompt | llm | parser
+    return knowledge_chain
 
 
 class AskLlmInput(BaseModel):
