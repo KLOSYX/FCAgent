@@ -96,7 +96,7 @@ def format_steps(intermediate_steps):
     log = []
     for action, observation in intermediate_steps:
         log.extend(
-            [HumanMessage(content=action.log), AIMessage(content=f"Observation: {observation}")]
+            [AIMessage(content=action.log), HumanMessage(content=f"Observation: {observation}")]
         )
     return log
 
