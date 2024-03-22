@@ -93,12 +93,17 @@ class ReActOutputParser(BaseOutputParser):
 
 
 def format_steps(intermediate_steps):
-    log = []
+    log: str = ""
     for action, observation in intermediate_steps:
-        log.extend(
-            [AIMessage(content=action.log), HumanMessage(content=f"Observation: {observation}")]
+        log += "\n\n".join(
+            (
+                action.log,
+                f"Action: {action.tool}",
+                f"Action Input: {action.tool_input}",
+                f"Observation: {observation}\n\n",
+            )
         )
-    return log
+    return [AIMessage(content=log)] if log else []
 
 
 REACT_AGENT_INSTRUCTIONS = """\
