@@ -53,7 +53,7 @@ def _get_agent(agent_name: str, llm, tools):
         )
         return create_structured_chat_agent(llm, tools, prompt)
     elif agent_name == "shoggoth13_react_json":
-        llm.bind(stop=["✿RESULT✿"])
+        llm.bind(stop=["✿RESULT✿", "\n✿RESULT✿", "✿RESULT✿:"])
         with open(ROOT / "prompt" / "shoggoth13_react_json.json", encoding="utf-8") as f:
             prompt_raw = json.load(f)
         prompt = ChatPromptTemplate.from_messages(

@@ -23,6 +23,9 @@ def extract_tool_use(input_text: str) -> tuple[str, str, str]:
         thought = match.group(1).strip()
     except AttributeError:
         thought = ""
+    thought = thought.replace("✿THOUGHT✿:", "").replace("\n", " ").strip()
+    if not thought:
+        thought = "I should use tools to help me solve this."
     action = match.group(2).strip()
     action_input = match.group(3).strip()
     return thought, action, action_input
@@ -100,7 +103,7 @@ def format_steps(intermediate_steps):
                 AIMessage(
                     content="\n\n".join(
                         (
-                            action.log,
+                            f"✿THOUGHT✿: {action.log}",
                             f"✿FUNCTION✿: {action.tool}",
                             f"✿ARGS✿: {action.tool_input}",
                         )
