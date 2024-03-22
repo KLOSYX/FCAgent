@@ -13,7 +13,7 @@ from langchain.schema.output_parser import BaseOutputParser
 
 def extract_tool_use(input_text: str) -> tuple[str, str, str]:
     # pattern = r"\s*Thought:(.*?)Action:(.*?)Action Input:(.*?)(?:\n|$)"
-    pattern = r"\s*(.*?)Action:(.*?)Action Input:(.*?)(?:\n|$)"
+    pattern = r"\s*(.*?)✿FUNCTION✿:(.*?)✿ARGS✿:(.*?)(?:\n|$)"
 
     match = re.search(pattern, input_text, re.DOTALL)
     if not match:
@@ -29,7 +29,7 @@ def extract_tool_use(input_text: str) -> tuple[str, str, str]:
 
 
 def extract_final_response(input_text: str) -> tuple[str, str]:
-    pattern = r"\s*Thought:(.*?)Answer:(.*?)(?:\n|$)"
+    pattern = r"\s*✿THOUGHT✿:(.*?)✿RETURN✿:(.*?)(?:\n|$)"
 
     match = re.search(pattern, input_text, re.DOTALL)
     if not match:
@@ -67,7 +67,11 @@ class ReActOutputParser(BaseOutputParser):
             Answer: <answer>
             ```
         """
-        if "Action:" in text:
+        if "✿RETURN✿" in text:
+            thought, answer = extract_final_response(text)
+            return AgentFinish(log=thought, return_values={"output": answer})
+
+        if "✿FUNCTION✿" in text:
             thought, action, action_input = extract_tool_use(text)
             json_str = extract_json_str(action_input)
 
@@ -78,11 +82,7 @@ class ReActOutputParser(BaseOutputParser):
 
             return AgentAction(log=thought, tool=action, tool_input=action_input_dict)
 
-        if "Answer:" in text:
-            thought, answer = extract_final_response(text)
-            return AgentFinish(log=thought, return_values={"output": answer})
-
-        if "Thought:" not in text:
+        if "✿THOUGHT✿" not in text:
             # NOTE: handle the case where the agent directly outputs the answer
             # instead of following the thought-answer format
             return AgentFinish(
@@ -93,17 +93,25 @@ class ReActOutputParser(BaseOutputParser):
 
 
 def format_steps(intermediate_steps):
-    log: str = ""
+    log = []
     for action, observation in intermediate_steps:
-        log += "\n\n".join(
-            (
-                action.log,
-                f"Action: {action.tool}",
-                f"Action Input: {action.tool_input}",
-                f"Observation: {observation}\n\n",
-            )
+        log.extend(
+            [
+                AIMessage(
+                    content="\n\n".join(
+                        (
+                            action.log,
+                            f"✿FUNCTION✿: {action.tool}",
+                            f"✿ARGS✿: {action.tool_input}",
+                        )
+                    )
+                ),
+                HumanMessage(
+                    content=f"✿RESULT✿: {observation}\n\n",
+                ),
+            ]
         )
-    return [AIMessage(content=log)] if log else []
+    return log
 
 
 REACT_AGENT_INSTRUCTIONS = """\
