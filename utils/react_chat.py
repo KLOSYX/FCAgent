@@ -78,16 +78,16 @@ class ReActOutputParser(BaseOutputParser):
 
             return AgentAction(log=thought, tool=action, tool_input=action_input_dict)
 
+        if "Answer:" in text:
+            thought, answer = extract_final_response(text)
+            return AgentFinish(log=thought, return_values={"output": answer})
+
         if "Thought:" not in text:
             # NOTE: handle the case where the agent directly outputs the answer
             # instead of following the thought-answer format
             return AgentFinish(
                 log="I can answer without any tools.", return_values={"output": text}
             )
-
-        if "Answer:" in text:
-            thought, answer = extract_final_response(text)
-            return AgentFinish(log=thought, return_values={"output": answer})
 
         raise ValueError(f"Could not parse output: {text}")
 
