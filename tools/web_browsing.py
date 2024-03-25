@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from langchain.chains import create_extraction_chain
@@ -21,11 +22,12 @@ schema = {
 }
 
 
-def extract(content: str, schema: dict, llm: Any):
-    return create_extraction_chain(schema=schema, llm=llm).invoke(content)
+# async def extract(content: str, schema: dict, llm: Any):
+#     res = await create_extraction_chain(schema=schema, llm=llm).ainvoke(content)
+#     return res
 
 
-def get_web_content_from_url(urls: list[str]):
+async def get_web_content_from_url(urls: list[str]):
     llm = ChatOpenAI(model_name=config.model_name, temperature=0.0)
     loader = AsyncHtmlLoader(urls)
     docs = loader.load()
@@ -37,15 +39,16 @@ def get_web_content_from_url(urls: list[str]):
         chunk_overlap=0,
     )
     splits = splitter.split_documents(docs_transformed)
-    results: list[str] = []
+    tasks = []
     for split in splits[: config.web_scrapy_max_splits]:
-        extracted_content = extract(
-            schema=schema,
-            content=split.page_content,
-            llm=llm,
+        tasks.append(
+            create_extraction_chain(
+                schema=schema,
+                llm=llm,
+            ).ainvoke(split.page_content)
         )
-        results.extend(extracted_content["text"])
-    return results
+    results = await asyncio.gather(*tasks)
+    return [x["text"] for x in results] if results else []
 
 
 class WebBrowsingInput(BaseModel):
@@ -61,11 +64,12 @@ class WebBrowsingTool(BaseTool):
     args_schema: type[BaseModel] = WebBrowsingInput
 
     def _run(self, indices: list[int], urls: list[str]) -> str:
-        web_content = get_web_content_from_url([urls[i] for i in indices])
-        return "\n".join(map(str, web_content)) + "\n"
+        # web_content = get_web_content_from_url([urls[i] for i in indices])
+        # return "\n".join(map(str, web_content)) + "\n"
+        raise NotImplementedError
 
     async def _arun(self, indices: list[int], urls: list[str]) -> str:
-        web_content = get_web_content_from_url([urls[i] for i in indices])
+        web_content = await get_web_content_from_url([urls[i] for i in indices])
         return "\n".join(map(str, web_content)) + "\n"
 
 
