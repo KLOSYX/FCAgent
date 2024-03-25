@@ -26,7 +26,7 @@ def extract(content: str, schema: dict, llm: Any):
 
 
 def get_web_content_from_url(urls: list[str]):
-    llm = ChatOpenAI(temperature=0.7, streaming=True)
+    llm = ChatOpenAI(model_name=config.model_name, temperature=0.0)
     loader = AsyncHtmlLoader(urls)
     docs = loader.load()
     html2text = Html2TextTransformer()
@@ -49,7 +49,8 @@ def get_web_content_from_url(urls: list[str]):
 
 
 class WebBrowsingInput(BaseModel):
-    url: str = Field(description="url of the web page")
+    indices: list[int] = Field(description="indices of web pages to browse")
+    urls: list[str] = Field(description="urls of web", required=False)
 
 
 class WebBrowsingTool(BaseTool):
@@ -59,12 +60,12 @@ class WebBrowsingTool(BaseTool):
     description = "Use this tool to obtain content of web pages"
     args_schema: type[BaseModel] = WebBrowsingInput
 
-    def _run(self, url: str) -> str:
-        web_content = get_web_content_from_url([url])
+    def _run(self, indices: list[int], urls: list[str]) -> str:
+        web_content = get_web_content_from_url([urls[i] for i in indices])
         return "\n".join(map(str, web_content)) + "\n"
 
-    async def _arun(self, url: str) -> str:
-        web_content = get_web_content_from_url([url])
+    async def _arun(self, indices: list[int], urls: list[str]) -> str:
+        web_content = get_web_content_from_url([urls[i] for i in indices])
         return "\n".join(map(str, web_content)) + "\n"
 
 

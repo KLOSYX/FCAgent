@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from langchain.prompts import PromptTemplate
 from langchain_community.tools import (
     BaseTool,
@@ -30,7 +32,7 @@ search results: {search_results}
 class SearchResult(BaseModel):
     results: list[tuple[str, str]] = Field(
         description="Formatted search results, output in \
-    (information to the query, URL) format."
+    (information relevant to the query, URL) format."
     )
 
 
@@ -61,13 +63,21 @@ class WebSearchInput(BaseModel):
     )
 
 
-chain = prompt | llm | parser
+format_search_results_chain = prompt | llm | parser
 
 
 def format_search_results(results: SearchResult) -> str:
-    ret = "Search Results: "
-    for i, (res, url) in enumerate(results.results):
-        ret += f"{i + 1}: {res}\tSource: {url}\t"
+    ret = json.dumps(
+        [
+            {
+                "index": i,
+                "title": query,
+                "url": url,
+            }
+            for i, (query, url) in enumerate(results.results)
+        ],
+        ensure_ascii=False,
+    )
     return ret
 
 
@@ -80,10 +90,14 @@ class WebSearchTool(BaseTool):
 
     def _run(self, query: str) -> str:
         search_results = get_web_searcher().run(query)
-        res = chain.invoke({"query": query, "search_results": search_results})
+        res = format_search_results_chain.invoke(
+            {"query": query, "search_results": search_results}
+        )
         return format_search_results(res)
 
     async def _arun(self, query: str) -> str:
         search_results = get_web_searcher().run(query)
-        res = await chain.ainvoke({"query": query, "search_results": search_results})
+        res = await format_search_results_chain.ainvoke(
+            {"query": query, "search_results": search_results}
+        )
         return format_search_results(res)

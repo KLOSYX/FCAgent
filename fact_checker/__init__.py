@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import operator
 from datetime import datetime
 from typing import Annotated, TypedDict, Union
@@ -49,6 +50,7 @@ class AgentState(TypedDict):
     chat_history: list[BaseMessage]
     agent_outcome: list[AgentAction] | AgentAction | AgentFinish | None
     intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
+    urls: list[str]
 
 
 def get_fact_checker_agent(tools):
@@ -62,7 +64,7 @@ def get_fact_checker_agent(tools):
     async def init_agent(data: AgentState):
         logger.debug(f"init agent with agent state: {data}")
         msg = await agent_prompt.ainvoke(data["input"])
-        return {"input": msg.text, "intermediate_steps": [], "chat_history": []}
+        return {"input": msg.text, "intermediate_steps": [], "chat_history": [], "urls": []}
 
     async def run_agent(data: AgentState):
         logger.debug(f"run agent with agent state: {data}")
@@ -71,8 +73,9 @@ def get_fact_checker_agent(tools):
 
     async def execute_tools(data: AgentState):
         logger.debug(f"execute tools with agent state: {data}")
+        ret = {}
         agent_actions = data["agent_outcome"]
-        old_steps = data.copy()["intermediate_steps"]
+        prev_steps = data.copy()["intermediate_steps"]
         steps = []
         if isinstance(agent_actions, list):
             for action in agent_actions:
@@ -81,9 +84,14 @@ def get_fact_checker_agent(tools):
                 output = await tool_executor.ainvoke(action)
                 steps.append((action, str(output)))
         elif isinstance(agent_actions, AgentAction):
+            if agent_actions.tool == "browse":
+                agent_actions.tool_input["urls"] = data["urls"]
             output = await tool_executor.ainvoke(agent_actions)
+            if agent_actions.tool == "web_search":
+                ret["urls"] = [x["url"] for x in json.loads(output)]
             steps.append((agent_actions, str(output)))
-        return {"intermediate_steps": old_steps + steps}
+        ret["intermediate_steps"] = prev_steps + steps
+        return ret
 
     def should_continue(data):
         logger.debug(f"should continue with agent state: {data}")
