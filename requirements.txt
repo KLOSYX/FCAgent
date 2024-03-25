@@ -11,5 +11,6 @@ pyrootutils==1.0.4
 requests==2.31.0
 agents_deconstructed
 loguru==0.7.2
+bs4==0.0.2
 
 aiohttp~=3.9.4rc0
