@@ -42,7 +42,7 @@ def generate_filename_from_image(image):
     img_byte_arr = BytesIO()
     image.save(img_byte_arr, format="PNG")
     img_byte_arr = img_byte_arr.getvalue()
-    hasher = hashlib.md5()
+    hasher = hashlib.sha256()
     hasher.update(img_byte_arr)
     hash_value = hasher.hexdigest()[:8]
     return str(hash_value)

@@ -19,7 +19,7 @@ output: (list in Markdown format)"""
 
 
 class Answer(BaseModel):
-    knowledge_list: list[str] = Field(description="List of knowledge string.")
+    knowledge: str = Field(description="Knowledge string.")
 
 
 # Set up a parser
@@ -51,26 +51,11 @@ class AskLlmTool(BaseTool):
     args_schema: type[BaseModel] = AskLlmInput
 
     def _run(self, question: str):
-        return (
-            "\t".join(
-                f"{i}. {s}"
-                for i, s in enumerate(
-                    get_closed_knowledge_chain().invoke({"text_input": question}).knowledge_list
-                )
-            )
-            + "\n"
-        )
+        return get_closed_knowledge_chain().invoke({"text_input": question}).knowledge
 
     async def _arun(self, question: str):
-        return (
-            "\t".join(
-                f"{i}. {s}"
-                for i, s in enumerate(
-                    get_closed_knowledge_chain().invoke({"text_input": question}).knowledge_list
-                )
-            )
-            + "\n"
-        )
+        res = await get_closed_knowledge_chain().ainvoke({"text_input": question})
+        return res.knowledge
 
 
 if __name__ == "__main__":

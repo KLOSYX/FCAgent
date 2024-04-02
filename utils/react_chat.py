@@ -15,6 +15,7 @@ def extract_tool_use(input_text: str) -> tuple[str, str, str]:
     # pattern = r"\s*Thought:(.*?)Action:(.*?)Action Input:(.*?)(?:\n|$)"
     pattern = r"\s*(.*?)✿FUNCTION✿:(.*?)✿ARGS✿:(.*?)(?:\n|$)"
 
+    input_text = input_text.replace("\n", "")
     match = re.search(pattern, input_text, re.DOTALL)
     if not match:
         raise ValueError(f"Could not extract tool use from input text: {input_text}")
@@ -27,6 +28,7 @@ def extract_tool_use(input_text: str) -> tuple[str, str, str]:
     if not thought:
         thought = "I should use tools to help me solve this."
     action = match.group(2).strip()
+    action = re.sub(r"\([^)]*\)", "", action).strip()  # 去除括号内的内容
     action_input = match.group(3).strip()
     return thought, action, action_input
 

@@ -21,36 +21,12 @@ __all__ = ["get_fact_checker_agent"]
 
 ROOT = setup_root(".")
 
-agent_template = """你是一名专业的事实核查机构编辑，给定如下的推文文本内容\
-以及推文图片名称，请借助工具，核查问题是否真实，并给出你的判断依据。\
-核查结束后，请用“核查结束：(你的结论)”结尾。
-当前日期：{date}
-待核查文本：{tweet_text}
-待核查图片：{tweet_image_name}"""
-
-en_agent_template = """You are a professional fact checking agency editor, providing the following tweet text content \
-as well as the tweet image name, please use tools to verify whether the claim is true or false and provide your \
-judgment basis.
-Current date: {date}
-Text to be verified: {tweet_text}
-Image to be verified: {tweet_image_name}
-"""
-
-agent_prompt = PromptTemplate(
-    input_variables=["tweet_text", "tweet_image_name"],
-    template=en_agent_template,
-    partial_variables={
-        "date": datetime.now().strftime("%Y-%m-%d"),
-    },
-)
-
 
 class AgentState(TypedDict):
     input: dict | str
     chat_history: list[BaseMessage]
     agent_outcome: list[AgentAction] | AgentAction | AgentFinish | None
     intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
-    urls: list[str]
 
 
 def get_fact_checker_agent(tools):
@@ -58,13 +34,15 @@ def get_fact_checker_agent(tools):
     llm = ChatOpenAI(
         model_name=config.model_name,
         streaming=True,
+        stop=["✿RESULT✿"],
+        temperature=0.0,
     )
     agent = _get_agent(config.agent_type, llm, tools)
 
     async def init_agent(data: AgentState):
         logger.debug(f"init agent with agent state: {data}")
-        msg = await agent_prompt.ainvoke(data["input"])
-        return {"input": msg.text, "intermediate_steps": [], "chat_history": [], "urls": []}
+        msg = await AGENT_PROMPT.ainvoke(data["input"])
+        return {"input": msg.text, "intermediate_steps": [], "chat_history": []}
 
     async def run_agent(data: AgentState):
         logger.debug(f"run agent with agent state: {data}")
@@ -84,11 +62,7 @@ def get_fact_checker_agent(tools):
                 output = await tool_executor.ainvoke(action)
                 steps.append((action, str(output)))
         elif isinstance(agent_actions, AgentAction):
-            if agent_actions.tool == "browse":
-                agent_actions.tool_input["urls"] = data["urls"]
             output = await tool_executor.ainvoke(agent_actions)
-            if agent_actions.tool == "web_search":
-                ret["urls"] = [x["url"] for x in json.loads(output)]
             steps.append((agent_actions, str(output)))
         ret["intermediate_steps"] = prev_steps + steps
         return ret
@@ -133,3 +107,26 @@ def get_fact_checker_agent(tools):
     app = workflow.compile()
 
     return app
+
+
+CN_AGENT_TEMPLATE = """你是一名专业的事实核查机构编辑，给定如下的推文文本内容\
+以及推文图片名称，请借助工具，核查问题是否真实，并给出你的判断依据。
+当前日期：{date}
+待核查文本：{tweet_text}
+待核查图片：{tweet_image_name}"""
+
+EN_AGENT_TEMPLATE = """You are a professional fact checking agency editor, providing the following tweet text content \
+as well as the tweet image name, please use tools to verify whether the claim is true or false and provide your \
+judgment basis.
+Current date: {date}
+Text to be verified: {tweet_text}
+Image to be verified: {tweet_image_name}
+"""
+
+AGENT_PROMPT = PromptTemplate(
+    input_variables=["tweet_text", "tweet_image_name"],
+    template=CN_AGENT_TEMPLATE,
+    partial_variables={
+        "date": datetime.now().strftime("%Y-%m-%d"),
+    },
+)

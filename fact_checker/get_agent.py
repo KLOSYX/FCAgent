@@ -9,6 +9,7 @@ from langchain.agents import (
 from langchain.prompts import MessagesPlaceholder
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
+from langchain_core.utils.function_calling import format_tool_to_openai_function
 from pyrootutils import setup_root
 
 from utils import react_chat
@@ -53,7 +54,6 @@ def _get_agent(agent_name: str, llm, tools):
         )
         return create_structured_chat_agent(llm, tools, prompt)
     elif agent_name == "shoggoth13_react_json":
-        llm.bind(stop=["✿RESULT✿", "\n✿RESULT✿", "✿RESULT✿:"])
         with open(ROOT / "prompt" / "shoggoth13_react_json.json", encoding="utf-8") as f:
             prompt_raw = json.load(f)
         prompt = ChatPromptTemplate.from_messages(
@@ -64,7 +64,10 @@ def _get_agent(agent_name: str, llm, tools):
             ]
         )
         prompt = prompt.partial(
-            tools=format_tools_args(tools), tool_names=", ".join([tool.name for tool in tools])
+            tools=json.dumps(
+                [format_tool_to_openai_function(tool) for tool in tools], ensure_ascii=False
+            ),
+            tool_names=", ".join([tool.name for tool in tools]),
         )
         agent = (
             RunnablePassthrough.assign(

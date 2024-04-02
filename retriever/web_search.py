@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import TypedDict
 
 from langchain.prompts import PromptTemplate
 from langchain_community.tools import (
@@ -29,11 +30,13 @@ search results: {search_results}
 """
 
 
+class Item(TypedDict):
+    key_info: str
+    url: str
+
+
 class SearchResult(BaseModel):
-    results: list[tuple[str, str]] = Field(
-        description="Formatted search results, output in \
-    (information relevant to the query, URL) format."
-    )
+    results: list[Item] = Field(description="Formatted search results.")
 
 
 # Set up a parser
@@ -70,11 +73,10 @@ def format_search_results(results: SearchResult) -> str:
     ret = json.dumps(
         [
             {
-                "index": i,
-                "title": query,
-                "url": url,
+                "title": item["key_info"],
+                "url": item["url"],
             }
-            for i, (query, url) in enumerate(results.results)
+            for item in results.results
         ],
         ensure_ascii=False,
     )
