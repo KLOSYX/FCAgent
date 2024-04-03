@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import operator
 from datetime import datetime
@@ -7,7 +8,7 @@ from typing import Annotated, TypedDict, Union
 
 from langchain.prompts import PromptTemplate
 from langchain_core.agents import AgentAction, AgentFinish
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt.tool_executor import ToolExecutor
@@ -34,7 +35,7 @@ def get_fact_checker_agent(tools):
     llm = ChatOpenAI(
         model_name=config.model_name,
         streaming=True,
-        stop=["✿RESULT✿"],
+        stop=["✿RESULT✿", "\n\n\n"],
         temperature=0.0,
     )
     agent = _get_agent(config.agent_type, llm, tools)
@@ -42,7 +43,17 @@ def get_fact_checker_agent(tools):
     async def init_agent(data: AgentState):
         logger.debug(f"init agent with agent state: {data}")
         msg = await AGENT_PROMPT.ainvoke(data["input"])
-        return {"input": msg.text, "intermediate_steps": [], "chat_history": []}
+        init_thought = "I need to test if the tool calls properly."
+        init_action = "test_tool"
+        init_action_input = ast.literal_eval(json.dumps({"params": "Hello World!"}))
+        init_observation = "The tool call is working properly."
+        intermediate_steps = [
+            (
+                AgentAction(log=init_thought, tool=init_action, tool_input=init_action_input),
+                init_observation,
+            )
+        ]
+        return {"input": msg.text, "intermediate_steps": intermediate_steps, "chat_history": []}
 
     async def run_agent(data: AgentState):
         logger.debug(f"run agent with agent state: {data}")
@@ -116,8 +127,7 @@ CN_AGENT_TEMPLATE = """你是一名专业的事实核查机构编辑，给定如
 待核查图片：{tweet_image_name}"""
 
 EN_AGENT_TEMPLATE = """You are a professional fact checking agency editor, providing the following tweet text content \
-as well as the tweet image name, please use tools to verify whether the claim is true or false and provide your \
-judgment basis.
+as well as the tweet image name, please use tools to verify whether the claim is true or false.
 Current date: {date}
 Text to be verified: {tweet_text}
 Image to be verified: {tweet_image_name}
@@ -125,7 +135,7 @@ Image to be verified: {tweet_image_name}
 
 AGENT_PROMPT = PromptTemplate(
     input_variables=["tweet_text", "tweet_image_name"],
-    template=CN_AGENT_TEMPLATE,
+    template=EN_AGENT_TEMPLATE,
     partial_variables={
         "date": datetime.now().strftime("%Y-%m-%d"),
     },

@@ -14,8 +14,7 @@ content of the tweet. The knowledge must be true and reliable, so if you don't h
 don't provide it.
 {format_instructions}
 ---
-text: {text_input}
-output: (list in Markdown format)"""
+Question: {text_input}"""
 
 
 class Answer(BaseModel):

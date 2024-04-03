@@ -11,6 +11,12 @@ from langchain.schema.messages import AIMessage, HumanMessage
 from langchain.schema.output_parser import BaseOutputParser
 
 
+def clean_thought(text: str, thought_pattern: str) -> str:
+    text = text.replace(thought_pattern, "")
+    text = re.sub(r"[^,.，。\w\s]", "", text).strip()
+    return text
+
+
 def extract_tool_use(input_text: str) -> tuple[str, str, str]:
     # pattern = r"\s*Thought:(.*?)Action:(.*?)Action Input:(.*?)(?:\n|$)"
     pattern = r"\s*(.*?)✿FUNCTION✿:(.*?)✿ARGS✿:(.*?)(?:\n|$)"
@@ -24,7 +30,7 @@ def extract_tool_use(input_text: str) -> tuple[str, str, str]:
         thought = match.group(1).strip()
     except AttributeError:
         thought = ""
-    thought = thought.replace("✿THOUGHT✿:", "").replace("\n", " ").strip()
+    thought = clean_thought(thought, "✿THOUGHT✿")
     if not thought:
         thought = "I should use tools to help me solve this."
     action = match.group(2).strip()
@@ -34,13 +40,14 @@ def extract_tool_use(input_text: str) -> tuple[str, str, str]:
 
 
 def extract_final_response(input_text: str) -> tuple[str, str]:
-    pattern = r"\s*✿THOUGHT✿:(.*?)✿RETURN✿:(.*?)(?:\n|$)"
+    pattern = r"\s*(.*?)✿RETURN✿:(.*?)(?:\n|$)"
 
     match = re.search(pattern, input_text, re.DOTALL)
     if not match:
         raise ValueError(f"Could not extract final answer from input text: {input_text}")
 
     thought = match.group(1).strip()
+    thought = clean_thought(thought, "✿THOUGHT✿")
     answer = match.group(2).strip()
     return thought, answer
 

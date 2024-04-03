@@ -119,4 +119,4 @@ if __name__ == "__main__":
         submit_btn="提交",
         stop_btn="停止",
         clear_btn="清除",
-    ).queue().launch(server_name="localhost", server_port=7860, ssl_verify=False)
+    ).queue(max_size=10).launch(server_name="localhost", server_port=7860, ssl_verify=False)
