@@ -3,7 +3,6 @@ from __future__ import annotations
 import ast
 import json
 import operator
-import os
 from datetime import datetime
 from typing import Annotated, TypedDict, Union
 
@@ -22,7 +21,6 @@ from fact_checker.get_agent import _get_agent
 __all__ = ["get_fact_checker_agent"]
 
 ROOT = setup_root(".")
-os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
 class AgentState(TypedDict):
@@ -42,8 +40,11 @@ def get_fact_checker_agent(tools):
     )
     agent = _get_agent(config.agent_type, llm, tools)
     if config.use_ocr:
+        import os
+
         from paddleocr import PaddleOCR
 
+        os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
         ocr = PaddleOCR(use_angle_cls=True, lang="ch")
     else:
         ocr = None
