@@ -13,6 +13,6 @@ agents_deconstructed
 loguru==0.7.2
 bs4==0.0.2
 paddlepaddle==2.6.1
-paddleocr==2.7.5
+paddleocr==2.7.2
 
 aiohttp~=3.9.4rc0
