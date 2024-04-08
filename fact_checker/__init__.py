@@ -39,9 +39,34 @@ def get_fact_checker_agent(tools):
         temperature=0.0,
     )
     agent = _get_agent(config.agent_type, llm, tools)
+    if config.use_ocr:
+        import os
+
+        from paddleocr import PaddleOCR
+
+        os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+        ocr = PaddleOCR(use_angle_cls=True, lang="ch")
+    else:
+        ocr = None
+
+    def _get_ocr_result(img_name: str) -> str:
+        img_path = ROOT / ".temp" / img_name
+        ocr_res = ocr.ocr(str(img_path), cls=True)
+        res_list = []
+        for idx in range(len(ocr_res[0])):
+            text, score = ocr_res[0][idx][-1]
+            if score > 0.1:
+                res_list.append(text.strip())
+        return ", ".join(res_list)
 
     async def init_agent(data: AgentState):
         logger.debug(f"init agent with agent state: {data}")
+        tweet_image_name = data["input"]["tweet_image_name"]
+        if tweet_image_name != "No image" and config.use_ocr:
+            ref_image_ocr_res = _get_ocr_result(tweet_image_name)
+        else:
+            ref_image_ocr_res = "No OCR result"
+        data["input"]["ref_image_ocr_res"] = ref_image_ocr_res
         msg = await AGENT_PROMPT.ainvoke(data["input"])
         init_thought = "I need to test if the tool calls properly."
         init_action = "test_tool"
@@ -124,17 +149,20 @@ CN_AGENT_TEMPLATE = """你是一名专业的事实核查机构编辑，给定如
 以及推文图片名称，请借助工具，核查问题是否真实，并给出你的判断依据。
 当前日期：{date}
 待核查文本：{tweet_text}
-待核查图片：{tweet_image_name}"""
+待核查图片：{tweet_image_name}
+参考图片OCR结果：{ref_image_ocr_res}
+"""
 
 EN_AGENT_TEMPLATE = """You are a professional fact checking agency editor, providing the following tweet text content \
 as well as the tweet image name, please use tools to verify whether the claim is true or false.
 Current date: {date}
 Text to be verified: {tweet_text}
 Image to be verified: {tweet_image_name}
+Reference image OCR result: {ref_image_ocr_res}
 """
 
 AGENT_PROMPT = PromptTemplate(
-    input_variables=["tweet_text", "tweet_image_name"],
+    input_variables=["tweet_text", "tweet_image_name", "ref_image_ocr_res"],
     template=EN_AGENT_TEMPLATE,
     partial_variables={
         "date": datetime.now().strftime("%Y-%m-%d"),

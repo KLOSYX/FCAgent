@@ -21,6 +21,7 @@ class Config:
     model_name: str = "vllm"
     search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
     web_scrapy_max_splits: int = 3
+    use_ocr: bool = True
 
 
 config = Config()
