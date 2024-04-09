@@ -1,3 +1,4 @@
+import asyncio
 import operator
 from enum import Enum
 from typing import Annotated, Literal, TypedDict
@@ -93,14 +94,15 @@ async def router(state: RouterState) -> dict:
 async def gather_all(state: RouterState) -> dict:
     if state["is_enough"]:
         return {}
-    knowledge = []
+    tasks = []
     if state["type"] != QueryType.COMMON:
-        knowledge.append(str(await wikipedia.WikipediaTool().ainvoke({"query": state["query"]})))
+        tasks.append(wikipedia.WikipediaTool().ainvoke({"query": state["query"]}))
     if state["type"] != QueryType.NEWS:
-        knowledge.append(str(await web_search.WebSearchTool().ainvoke({"query": state["query"]})))
+        tasks.append(web_search.WebSearchTool().ainvoke({"query": state["query"]}))
     if state["type"] != QueryType.OTHER:
-        knowledge.append(str(await ask_llm.AskLlmTool().ainvoke({"question": state["query"]})))
-    return {"search_results": state["search_results"] + knowledge}
+        tasks.append(ask_llm.AskLlmTool().ainvoke({"question": state["query"]}))
+    knowledge = await asyncio.gather(*tasks)
+    return {"search_results": state["search_results"] + list(map(str, knowledge))}
 
 
 async def enough(state: RouterState) -> dict:
@@ -173,6 +175,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     print(asyncio.run(main()))
