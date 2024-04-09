@@ -15,9 +15,9 @@ class Config:
     agent_type: Literal[
         "openai_tools", "react_json", "structured_chat", "shoggoth13_react_json"
     ] = "shoggoth13_react_json"
-    core_server_addr: str = "http://10.26.128.30:8000"
+    core_server_addr: str = "http://localhost:8001"
     vl_model_type: Literal["local", "gpt4v"] = "gpt4v"
-    vl_server_addr: str = "http://10.26.128.30:8001"
+    vl_server_addr: str = "http://localhost:8002"
     model_name: str = "vllm"
     search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
     web_scrapy_max_splits: int = 3
