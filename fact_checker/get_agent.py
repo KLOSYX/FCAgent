@@ -9,7 +9,7 @@ from langchain.agents import (
 from langchain.prompts import MessagesPlaceholder
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.utils.function_calling import format_tool_to_openai_function
+from langchain_core.utils.function_calling import convert_to_openai_function
 from pyrootutils import setup_root
 
 from utils import react_chat
@@ -65,7 +65,7 @@ def _get_agent(agent_name: str, llm, tools):
         )
         prompt = prompt.partial(
             tools=json.dumps(
-                [format_tool_to_openai_function(tool) for tool in tools], ensure_ascii=False
+                [convert_to_openai_function(tool) for tool in tools], ensure_ascii=False
             ),
             tool_names=", ".join([tool.name for tool in tools]),
         )
