@@ -17,6 +17,8 @@ from pyrootutils import setup_root
 
 from config import config
 from fact_checker.get_agent import _get_agent
+from tools.summarizer import SummarizerScheme, get_summarizer_chain
+from utils.react_chat import format_steps
 
 __all__ = ["get_fact_checker_agent"]
 
@@ -28,6 +30,7 @@ class AgentState(TypedDict):
     chat_history: list[BaseMessage]
     agent_outcome: list[AgentAction] | AgentAction | AgentFinish | None
     intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
+    final_output: None | SummarizerScheme
 
 
 def get_fact_checker_agent(tools):
@@ -78,7 +81,12 @@ def get_fact_checker_agent(tools):
                 init_observation,
             )
         ]
-        return {"input": msg.text, "intermediate_steps": intermediate_steps, "chat_history": []}
+        return {
+            "input": msg.text,
+            "intermediate_steps": intermediate_steps,
+            "chat_history": [],
+            "final_output": None,
+        }
 
     async def run_agent(data: AgentState):
         logger.debug(f"run agent with agent state: {data}")
@@ -103,6 +111,16 @@ def get_fact_checker_agent(tools):
         ret["intermediate_steps"] = prev_steps + steps
         return ret
 
+    async def run_summarizer(data: AgentState):
+        logger.debug(f"run summarizer with agent state: {data}")
+        summarizer = get_summarizer_chain()
+        procedures: list = format_steps(data["intermediate_steps"])
+        history = "".join(x.content for x in procedures)
+        res: SummarizerScheme = await summarizer.ainvoke(
+            {"claim_text": data["input"], "history": history}
+        )
+        return {"final_output": res}
+
     def should_continue(data):
         logger.debug(f"should continue with agent state: {data}")
         if isinstance(data["agent_outcome"], AgentFinish):
@@ -124,6 +142,7 @@ def get_fact_checker_agent(tools):
     workflow.add_node("start", init_agent)
     workflow.add_node("agent", run_agent)
     workflow.add_node("action", execute_tools)
+    workflow.add_node("summarize", run_summarizer)
 
     workflow.set_entry_point("start")
 
@@ -133,12 +152,13 @@ def get_fact_checker_agent(tools):
         {
             "continue": "action",
             "agent": "agent",
-            "end": END,
+            "end": "summarize",
         },
     )
 
     workflow.add_edge("start", "agent")
     workflow.add_edge("action", "agent")
+    workflow.add_edge("summarize", END)
 
     app = workflow.compile()
 
