@@ -37,7 +37,7 @@ def get_closed_knowledge_chain():
 
 
 class AskLlmInput(BaseModel):
-    question: str = Field(description="The question to ask. Could be any language.")
+    query: str = Field(description="The question to ask. Could be any language.")
 
 
 class AskLlmTool(BaseTool):
@@ -49,11 +49,11 @@ class AskLlmTool(BaseTool):
     )
     args_schema: type[BaseModel] = AskLlmInput
 
-    def _run(self, question: str):
-        return get_closed_knowledge_chain().invoke({"text_input": question}).knowledge
+    def _run(self, query: str):
+        return get_closed_knowledge_chain().invoke({"text_input": query}).knowledge
 
-    async def _arun(self, question: str):
-        res = await get_closed_knowledge_chain().ainvoke({"text_input": question})
+    async def _arun(self, query: str):
+        res = await get_closed_knowledge_chain().ainvoke({"text_input": query})
         return res.knowledge
 
 

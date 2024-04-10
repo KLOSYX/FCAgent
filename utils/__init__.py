@@ -8,7 +8,7 @@ from pyrootutils import setup_root
 ROOT = setup_root(".")
 
 
-def load_base_tools(directory: str) -> list[BaseTool]:
+def load_base_tools(directory: str, except_classes: None | list[str] = None) -> list[BaseTool]:
     """Load all BaseTool instances from directory."""
     all_instance = []
     path = ROOT / directory
@@ -17,6 +17,8 @@ def load_base_tools(directory: str) -> list[BaseTool]:
             continue
         # 需要被导入的class必须与文件名存在对应关系：image_qa.py -> ImageQaTool(BaseTool)
         class_name = "".join([x.capitalize() for x in filename.stem.split("_")]) + "Tool"
+        if except_classes is not None and class_name in except_classes:
+            continue
         import_path = ".".join([directory, filename.parts[-1][:-3]])
         module = importlib.import_module(import_path)
         try:

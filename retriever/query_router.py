@@ -1,33 +1,42 @@
 import asyncio
+import json
 import operator
 from enum import Enum
 from typing import Annotated, Literal, TypedDict
 
 from langchain.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field, validator
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import BaseTool
 from langchain_openai.chat_models import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
 from config import config
-from retriever import ask_llm, web_search, wikipedia
+from utils import load_base_tools
 from utils.pydantic import PydanticOutputParser
 
+RETRIEVER_MAP = {x.name: x for x in load_base_tools("retriever", ["QueryRouterTool"])}
 
-class ClassificationScheme(BaseModel):
-    yes_or_no: Literal["Yes", "No"] = None
+
+class ToolSelectScheme(BaseModel):
+    tool_name: str = Field(description="name of the tool")
+
+
+class AdequacyScheme(BaseModel):
+    yes_or_no: Literal["yes", "no"]
 
 
 llm = ChatOpenAI(model_name=config.model_name, temperature=0, streaming=False)
 
-classification_parser = PydanticOutputParser(pydantic_object=ClassificationScheme)
-CLASSIFICATION_PROMPT_TEMPLATE = """Given the query "{query}", please determine if it is about "{type}".
+classification_parser = PydanticOutputParser(pydantic_object=ToolSelectScheme)
+CLASSIFICATION_PROMPT_TEMPLATE = """Given the query "{query}", Which of the following do you think is the best search \
+tool?
+{tools}
 ---
 {format_instructions}
 """
 CLASSIFICATION_PROMPT = PromptTemplate(
     template=CLASSIFICATION_PROMPT_TEMPLATE,
-    input_variables=["query", "type"],
+    input_variables=["query", "tools"],
 ).partial(format_instructions=classification_parser.get_format_instructions())
 classification_chain = CLASSIFICATION_PROMPT | llm | classification_parser
 
@@ -37,11 +46,12 @@ Search Results: {search_results}
 ---
 {format_instructions}
 """
+adequacy_parser = PydanticOutputParser(pydantic_object=AdequacyScheme)
 ADEQUACY_PROMPT = PromptTemplate(
     template=ADEQUACY_PROMPT_TEMPLATE,
     input_variables=["query", "search_results"],
-).partial(format_instructions=classification_parser.get_format_instructions())
-adequacy_chain = ADEQUACY_PROMPT | llm | classification_parser
+).partial(format_instructions=adequacy_parser.get_format_instructions())
+adequacy_chain = ADEQUACY_PROMPT | llm | adequacy_parser
 
 
 class QueryType(Enum):
@@ -54,40 +64,32 @@ class QueryType(Enum):
 class RouterState(TypedDict):
     query: str
     search_results: Annotated[list[str], operator.add]
-    type: None | QueryType
+    retriever: None | str
     is_enough: bool
 
 
 async def init_router_state(state: RouterState) -> dict:
-    return {"search_results": [], "type": None, "is_enough": False}
+    return {"search_results": [], "retriever": None, "is_enough": False}
 
 
-async def common_sense(state: RouterState) -> dict:
-    is_common_sense = await classification_chain.ainvoke(
-        {"query": state["query"], "type": "common sense or encyclopedia"}
+async def dispatch(state: RouterState) -> dict:
+    retrievers = list(RETRIEVER_MAP.values())
+    tools = json.dumps(
+        [{"tool_name": x.name, "tool_description": x.description} for x in retrievers],
+        ensure_ascii=False,
     )
-    if is_common_sense.yes_or_no == "Yes":
-        return {"type": QueryType.COMMON}
-    return {"type": QueryType.UNDETERMINED}
-
-
-async def news_or_time_sensitive(state: RouterState) -> dict:
-    is_news_or_time_sensitive = await classification_chain.ainvoke(
-        {"query": state["query"], "type": "news or time sensitive"}
+    res: ToolSelectScheme = await classification_chain.ainvoke(
+        {"query": state["query"], "tools": tools}
     )
-    if is_news_or_time_sensitive.yes_or_no == "Yes":
-        return {"type": QueryType.NEWS}
-    return {"type": QueryType.OTHER}
+    return {"retriever": res.tool_name}
 
 
 async def router(state: RouterState) -> dict:
     knowledge = []
-    if state["type"] == QueryType.COMMON:
-        knowledge.append(str(await wikipedia.WikipediaTool().ainvoke({"query": state["query"]})))
-    elif state["type"] == QueryType.NEWS:
-        knowledge.append(str(await web_search.WebSearchTool().ainvoke({"query": state["query"]})))
-    elif state["type"] == QueryType.OTHER:
-        knowledge.append(str(await ask_llm.AskLlmTool().ainvoke({"question": state["query"]})))
+    if state["retriever"] in RETRIEVER_MAP:
+        knowledge.append(
+            str(await RETRIEVER_MAP[state["retriever"]].ainvoke({"query": state["query"]}))
+        )
     return {"search_results": state["search_results"] + knowledge}
 
 
@@ -95,12 +97,9 @@ async def gather_all(state: RouterState) -> dict:
     if state["is_enough"]:
         return {}
     tasks = []
-    if state["type"] != QueryType.COMMON:
-        tasks.append(wikipedia.WikipediaTool().ainvoke({"query": state["query"]}))
-    if state["type"] != QueryType.NEWS:
-        tasks.append(web_search.WebSearchTool().ainvoke({"query": state["query"]}))
-    if state["type"] != QueryType.OTHER:
-        tasks.append(ask_llm.AskLlmTool().ainvoke({"question": state["query"]}))
+    for retriever_name in RETRIEVER_MAP.keys():
+        if retriever_name != state["retriever"]:
+            tasks.append(RETRIEVER_MAP[retriever_name].ainvoke({"query": state["query"]}))
     knowledge = await asyncio.gather(*tasks)
     return {"search_results": state["search_results"] + list(map(str, knowledge))}
 
@@ -112,37 +111,22 @@ async def enough(state: RouterState) -> dict:
     return {"is_enough": is_enough.yes_or_no == "Yes"}
 
 
-def conditional_edge(state: RouterState) -> str:
-    if state["type"] == QueryType.UNDETERMINED:
-        return "news_or_time_sensitive"
-    if state["type"] in (QueryType.COMMON, QueryType.NEWS, QueryType.OTHER):
-        return "router"
-
-
 workflow = StateGraph(RouterState)
 
 workflow.add_node("start", init_router_state)
-workflow.add_node("common_sense", common_sense)
-workflow.add_node("news_or_time_sensitive", news_or_time_sensitive)
+workflow.add_node("dispatch", dispatch)
 workflow.add_node("router", router)
-workflow.add_node("enough", enough)
-workflow.add_node("gather_all", gather_all)
+# workflow.add_node("enough", enough)
+# workflow.add_node("gather_all", gather_all)
 
 workflow.set_entry_point("start")
 
-workflow.add_edge("start", "common_sense")
-workflow.add_conditional_edges(
-    "common_sense",
-    conditional_edge,
-    {
-        "news_or_time_sensitive": "news_or_time_sensitive",
-        "router": "router",
-    },
-)
-workflow.add_edge("news_or_time_sensitive", "router")
-workflow.add_edge("router", "enough")
-workflow.add_edge("enough", "gather_all")
-workflow.add_edge("gather_all", END)
+workflow.add_edge("start", "dispatch")
+workflow.add_edge("dispatch", "router")
+workflow.add_edge("router", END)
+# workflow.add_edge("router", "enough")
+# workflow.add_edge("enough", "gather_all")
+# workflow.add_edge("gather_all", END)
 
 app = workflow.compile()
 
