@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -11,7 +12,7 @@ from config import config
 from fact_checker import get_fact_checker_agent
 from retriever import RETRIEVER_LIST
 from tools import TOOL_LIST
-from tools.summarizer import get_summarizer_chain
+from tools.summarizer import SummarizerScheme
 from utils import generate_filename_from_image
 
 root = setup_root(".", pythonpath=True, dotenv=True)
@@ -45,11 +46,12 @@ async def inference(
         all_tools = list(filter(lambda x: not x.is_multimodal, all_tools))
     agent = get_fact_checker_agent(all_tools)
     partial_message = ""
+    ended = False
     async for event in agent.astream_events(
         {
             "input": {
                 "tweet_text": claim,
-                "tweet_image_name": image_name if raw_image is not None else "No image.",
+                "tweet_image_name": image_name,
             }
         },
         version="v1",
@@ -70,16 +72,16 @@ async def inference(
                 tool_output = tool_output.replace("\n", "\t")
                 partial_message += f"\n\n> 工具输出：{tool_output}\n\n"
             yield format_markdown(partial_message)
-    summarizer = get_summarizer_chain()
-    result = await summarizer.ainvoke(
-        {
-            "claim_text": claim,
-            "history": format_markdown(partial_message),
-        },
-    )
-    partial_message += "\n\n---\n\n"
-    partial_message += f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
-    yield format_markdown(partial_message)
+        elif kind == "on_parser_end" and isinstance(event["data"].get("output"), SummarizerScheme):
+            ended = True
+            result = event["data"].get("output")
+            partial_message += "\n\n---\n\n"
+            partial_message += (
+                f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
+            )
+            yield format_markdown(partial_message)
+        elif not ended:
+            yield format_markdown(partial_message + "\n\nPlease wait...")
 
 
 if __name__ == "__main__":
