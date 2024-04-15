@@ -44,7 +44,19 @@ async def inference(
     ]
     if raw_image is None:
         all_tools = list(filter(lambda x: not x.is_multimodal, all_tools))
-    agent = get_fact_checker_agent(all_tools)
+
+    # initialize ocr
+    if config.use_ocr:
+        import os
+
+        from paddleocr import PaddleOCR
+
+        os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+        ocr = PaddleOCR(use_angle_cls=True, lang="ch")
+    else:
+        ocr = None
+
+    agent = get_fact_checker_agent(all_tools, ocr)
     partial_message = ""
     ended = False
     async for event in agent.astream_events(

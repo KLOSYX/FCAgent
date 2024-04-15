@@ -30,7 +30,6 @@ class SummarizerScheme(BaseModel):
 
 parser = PydanticOutputParser(pydantic_object=SummarizerScheme)
 
-
 prompt = PromptTemplate(
     template=template,
     input_variables=["claim_text", "history"],
@@ -40,7 +39,14 @@ prompt = PromptTemplate(
 def get_summarizer_chain():
     chain = (
         prompt
-        | ChatOpenAI(model_name=config.model_name, temperature=0.0, streaming=False)
+        | ChatOpenAI(
+            model_name=config.model_name,
+            temperature=0.0,
+            streaming=False,
+            extra_body={
+                "guided_json": SummarizerScheme.schema_json(),
+            },  # just for vllm
+        )
         | parser
     )
     return chain
