@@ -192,7 +192,7 @@ AGENT_CFG = r"""
     %ignore WS
 """
 
-AGENT_REGEX = r"""(✿THOUGHT✿: .+\n\n)((✿FUNCTION✿: .+\n\n✿ARGS✿:\{"([^"]+)":"([^"]+)"})\n\n|(✿RETURN✿: .+)\n\n)"""
+AGENT_REGEX = r"""(✿THOUGHT✿: .+\n\n)((✿FUNCTION✿: .+\n\n✿ARGS✿:\{"([^"]+)":"([^"]+)"(,"([^"]+)":"([^"]+)")*})\n\n|(✿RETURN✿: .+)\n\n)"""
 
 AGENT_PROMPT = PromptTemplate(
     input_variables=["tweet_text", "tweet_image_name", "ref_image_ocr_res"],
