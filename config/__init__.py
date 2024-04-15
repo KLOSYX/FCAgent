@@ -22,6 +22,7 @@ class Config:
     search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
     web_scrapy_max_splits: int = 3
     use_ocr: bool = True
+    use_constrained_decoding: bool = True
 
 
 config = Config()

@@ -44,7 +44,15 @@ parser = PydanticOutputParser(pydantic_object=SearchResult)
 prompt = PromptTemplate(
     template=SEARCH_PROMPT, input_variables=["query", "search_results"]
 ).partial(format_instructions=parser.get_format_instructions())
-llm = ChatOpenAI(model_name=config.model_name, temperature=0.0)
+llm = ChatOpenAI(
+    model_name=config.model_name,
+    temperature=0.0,
+    extra_body={
+        "guided_json": SearchResult.schema_json(),
+    }
+    if config.use_constrained_decoding
+    else None,
+)
 
 
 def get_web_searcher():

@@ -33,24 +33,21 @@ class AgentState(TypedDict):
     final_output: None | SummarizerScheme
 
 
-def get_fact_checker_agent(tools):
+def get_fact_checker_agent(tools, ocr):
     tool_executor = ToolExecutor(tools)
     llm = ChatOpenAI(
         model_name=config.model_name,
         streaming=True,
         stop=["✿RESULT✿", "\n\n\n"],
         temperature=0.0,
+        extra_body={
+            # "guided_grammar": AGENT_CFG,
+            "guided_regex": AGENT_REGEX,
+        }
+        if config.use_constrained_decoding
+        else None,  # just for vllm
     )
     agent = _get_agent(config.agent_type, llm, tools)
-    if config.use_ocr:
-        import os
-
-        from paddleocr import PaddleOCR
-
-        os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
-        ocr = PaddleOCR(use_angle_cls=True, lang="ch")
-    else:
-        ocr = None
 
     def _get_ocr_result(img_name: str) -> str:
         img_path = ROOT / ".temp" / img_name
@@ -114,7 +111,7 @@ def get_fact_checker_agent(tools):
     async def run_summarizer(data: AgentState):
         logger.debug(f"run summarizer with agent state: {data}")
         summarizer = get_summarizer_chain()
-        procedures: list = format_steps(data["intermediate_steps"])
+        procedures: list = format_steps(data["intermediate_steps"][1:])
         history = "".join(x.content for x in procedures)
         res: SummarizerScheme = await summarizer.ainvoke(
             {"claim_text": data["input"], "history": history}
@@ -181,9 +178,27 @@ Image to be verified: {tweet_image_name}
 Reference image OCR result: {ref_image_ocr_res}
 """
 
+AGENT_CFG = r"""
+    ?start : thought_action | return
+
+    ?thought_action : "✿THOUGHT✿:" WORD "✿FUNCTION✿:" WORD "✿ARGS✿:" dict
+    ?return : "✿RETURN✿: " WORD
+
+    dict : "{" pair "}"
+    pair : STRING ":" STRING
+
+    STRING : "\"" WORD "\""
+
+    WORD : /[^"]+/
+    %import common.WS
+    %ignore WS
+"""
+
+AGENT_REGEX = r"""(✿THOUGHT✿: .+\n\n)((✿FUNCTION✿: .+\n\n✿ARGS✿:\{"([^"]+)":"([^"]+)"(,"([^"]+)":"([^"]+)")*})\n\n|(✿RETURN✿: .+)\n\n)"""
+
 AGENT_PROMPT = PromptTemplate(
     input_variables=["tweet_text", "tweet_image_name", "ref_image_ocr_res"],
-    template=EN_AGENT_TEMPLATE,
+    template=CN_AGENT_TEMPLATE,
     partial_variables={
         "date": datetime.now().strftime("%Y-%m-%d"),
     },
