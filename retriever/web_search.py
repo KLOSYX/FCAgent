@@ -49,7 +49,9 @@ llm = ChatOpenAI(
     temperature=0.0,
     extra_body={
         "guided_json": SearchResult.schema_json(),
-    },
+    }
+    if config.use_constrained_decoding
+    else None,
 )
 
 

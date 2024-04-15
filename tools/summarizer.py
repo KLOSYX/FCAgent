@@ -45,7 +45,9 @@ def get_summarizer_chain():
             streaming=False,
             extra_body={
                 "guided_json": SummarizerScheme.schema_json(),
-            },  # just for vllm
+            }
+            if config.use_constrained_decoding
+            else None,  # just for vllm
         )
         | parser
     )

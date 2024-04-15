@@ -43,7 +43,9 @@ def get_fact_checker_agent(tools, ocr):
         extra_body={
             # "guided_grammar": AGENT_CFG,
             "guided_regex": AGENT_REGEX,
-        },  # just for vllm
+        }
+        if config.use_constrained_decoding
+        else None,  # just for vllm
     )
     agent = _get_agent(config.agent_type, llm, tools)
 
