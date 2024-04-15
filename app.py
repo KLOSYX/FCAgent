@@ -21,6 +21,17 @@ logger.level(config.log_level)
 tool_map = {x.cn_name: x for x in TOOL_LIST}
 retriever_map = {x.cn_name: x for x in RETRIEVER_LIST}
 
+# initialize ocr
+if config.use_ocr:
+    import os
+
+    from paddleocr import PaddleOCR
+
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+    ocr = PaddleOCR(use_angle_cls=True, lang="ch")
+else:
+    ocr = None
+
 
 def format_markdown(text: str) -> str:
     text = text.replace("```", "")
@@ -30,6 +41,7 @@ def format_markdown(text: str) -> str:
 async def inference(
     raw_image: Any, claim: str, selected_tools: list[str], selected_retrievers: list[str]
 ):
+    global ocr
     tmp_dir = root / ".temp"
     if not tmp_dir.exists():
         tmp_dir.mkdir(parents=True)
@@ -44,17 +56,6 @@ async def inference(
     ]
     if raw_image is None:
         all_tools = list(filter(lambda x: not x.is_multimodal, all_tools))
-
-    # initialize ocr
-    if config.use_ocr:
-        import os
-
-        from paddleocr import PaddleOCR
-
-        os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
-        ocr = PaddleOCR(use_angle_cls=True, lang="ch")
-    else:
-        ocr = None
 
     agent = get_fact_checker_agent(all_tools, ocr)
     partial_message = ""
