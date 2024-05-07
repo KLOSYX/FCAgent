@@ -72,12 +72,16 @@ def get_fact_checker_agent(tools, ocr):
         init_action = "test_tool"
         init_action_input = ast.literal_eval(json.dumps({"params": "Hello World!"}))
         init_observation = "The tool call is working properly."
-        intermediate_steps = [
-            (
-                AgentAction(log=init_thought, tool=init_action, tool_input=init_action_input),
-                init_observation,
-            )
-        ]
+        intermediate_steps = (
+            [
+                (
+                    AgentAction(log=init_thought, tool=init_action, tool_input=init_action_input),
+                    init_observation,
+                )
+            ]
+            if config.agent_type == "shoggoth13_react_json"
+            else []
+        )
         return {
             "input": msg.text,
             "intermediate_steps": intermediate_steps,
@@ -111,7 +115,9 @@ def get_fact_checker_agent(tools, ocr):
     async def run_summarizer(data: AgentState):
         logger.debug(f"run summarizer with agent state: {data}")
         summarizer = get_summarizer_chain()
-        procedures: list = format_steps(data["intermediate_steps"][1:])
+        procedures: list = format_steps(data["intermediate_steps"])
+        if config.agent_type == "shoggoth13_react_json":
+            procedures = procedures[1:]
         history = "".join(x.content for x in procedures)
         res: SummarizerScheme = await summarizer.ainvoke(
             {"claim_text": data["input"], "history": history}
