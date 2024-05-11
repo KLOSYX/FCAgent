@@ -39,7 +39,7 @@ def get_fact_checker_agent(tools, ocr):
         model_name=config.model_name,
         streaming=True,
         stop=["✿RESULT✿", "\n\n\n"],
-        temperature=0.0,
+        temperature=1.0,
         extra_body={
             # "guided_grammar": AGENT_CFG,
             "guided_regex": AGENT_REGEX,
@@ -68,20 +68,25 @@ def get_fact_checker_agent(tools, ocr):
             ref_image_ocr_res = "No OCR result"
         data["input"]["ref_image_ocr_res"] = ref_image_ocr_res
         msg = await AGENT_PROMPT.ainvoke(data["input"])
-        init_thought = "I need to test if the tool calls properly."
-        init_action = "test_tool"
-        init_action_input = ast.literal_eval(json.dumps({"params": "Hello World!"}))
-        init_observation = "The tool call is working properly."
-        intermediate_steps = (
-            [
+        intermediate_steps = []
+        if "shoggoth13_react_json" in config.agent_type:  # one-shot prompt
+            if "cn" in config.agent_type:
+                init_thought = "我需要测试一下工具是否能够正常调用。"
+                init_action = "toy_tool"
+                init_action_input = ast.literal_eval(json.dumps({"params": "你好世界！"}))
+                init_observation = "工具调用正常。"
+            else:
+                init_thought = "I need to test if the tool calls properly."
+                init_action = "toy_tool"
+                init_action_input = ast.literal_eval(json.dumps({"params": "Hello World!"}))
+                init_observation = "The tool call is working properly."
+            intermediate_steps.append(
                 (
                     AgentAction(log=init_thought, tool=init_action, tool_input=init_action_input),
                     init_observation,
                 )
-            ]
-            if config.agent_type == "shoggoth13_react_json"
-            else []
-        )
+            )
+
         return {
             "input": msg.text,
             "intermediate_steps": intermediate_steps,
@@ -116,7 +121,7 @@ def get_fact_checker_agent(tools, ocr):
         logger.debug(f"run summarizer with agent state: {data}")
         summarizer = get_summarizer_chain()
         procedures: list = format_steps(data["intermediate_steps"])
-        if config.agent_type == "shoggoth13_react_json":
+        if "shoggoth13_react_json" in config.agent_type:
             procedures = procedures[1:]
         history = "".join(x.content for x in procedures)
         res: SummarizerScheme = await summarizer.ainvoke(
@@ -129,7 +134,7 @@ def get_fact_checker_agent(tools, ocr):
         if isinstance(data["agent_outcome"], AgentFinish):
             if (
                 "核查结束" in data["agent_outcome"].messages[0].content
-                or config.agent_type == "shoggoth13_react_json"
+                or "shoggoth13_react_json" in config.agent_type
             ):
                 logger.debug("agent stopped")
                 return "end"

@@ -16,8 +16,11 @@ def _get_agent(agent_name: str, llm, tools):
 
         return create_openai_tools_agent(llm, tools, prompt)
 
-    elif agent_name == "shoggoth13_react_json":
-        from prompt.shoggoth13_react_json import prompt
+    elif "shoggoth13_react_json" in agent_name:
+        if "cn" in agent_name:
+            from prompt.shoggoth13_react_json_cn import prompt
+        else:
+            from prompt.shoggoth13_react_json import prompt
 
         prompt = prompt.partial(
             tools=json.dumps(

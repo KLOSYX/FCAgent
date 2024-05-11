@@ -12,7 +12,9 @@ from typing import Literal
 @dataclass(frozen=True)
 class Config:
     log_level: Literal["DEBUG", "INFO", "WARNING"] = "DEBUG"
-    agent_type: Literal["openai_tools", "shoggoth13_react_json"] = "shoggoth13_react_json"
+    agent_type: Literal[
+        "openai_tools", "shoggoth13_react_json", "shoggoth13_react_json_cn"
+    ] = "shoggoth13_react_json_cn"
     core_server_addr: str = "http://localhost:8001"
     vl_model_type: Literal["local", "gpt4v"] = "gpt4v"
     vl_server_addr: str = "http://localhost:8002"
