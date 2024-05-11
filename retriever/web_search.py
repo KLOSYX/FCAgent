@@ -99,15 +99,25 @@ class WebSearchTool(BaseTool):
     args_schema: type[BaseModel] = WebSearchInput
 
     def _run(self, query: str) -> str:
-        search_results = get_web_searcher().run(query)
-        res = format_search_results_chain.invoke(
-            {"query": query, "search_results": search_results}
-        )
-        return format_search_results(res)
+        try:
+            search_results: str = get_web_searcher().run(query)
+            if config.rewrite_search_results:
+                res = format_search_results_chain.invoke(
+                    {"query": query, "search_results": search_results}
+                )
+                return format_search_results(res)
+            return search_results
+        except Exception as e:
+            return "Fail to run web search: " + str(e)
 
     async def _arun(self, query: str) -> str:
-        search_results = get_web_searcher().run(query)
-        res = await format_search_results_chain.ainvoke(
-            {"query": query, "search_results": search_results}
-        )
-        return format_search_results(res)
+        try:
+            search_results: str = get_web_searcher().run(query)
+            if config.rewrite_search_results:
+                res = await format_search_results_chain.ainvoke(
+                    {"query": query, "search_results": search_results}
+                )
+                return format_search_results(res)
+            return search_results
+        except Exception as e:
+            return "Fail to run web search: " + str(e)
