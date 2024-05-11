@@ -20,6 +20,7 @@ class Config:
     vl_server_addr: str = "http://localhost:8002"
     model_name: str = "vllm"
     search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
+    rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
     use_ocr: bool = True
     use_constrained_decoding: bool = True

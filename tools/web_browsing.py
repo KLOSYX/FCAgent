@@ -69,8 +69,11 @@ class WebBrowsingTool(BaseTool):
         raise NotImplementedError
 
     async def _arun(self, urls: list[str]) -> str:
-        web_content = await get_web_content_from_url(urls)
-        return "\n".join(map(str, web_content)) + "\n"
+        try:
+            web_content = await get_web_content_from_url(urls)
+            return "\n".join(map(str, web_content)) + "\n"
+        except Exception as e:
+            return "Failed to get web content: " + str(e)
 
 
 if __name__ == "__main__":
