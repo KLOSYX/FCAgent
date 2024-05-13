@@ -1,48 +1,30 @@
 from __future__ import annotations
 
 import base64
-import json
+import os
 from io import BytesIO
-from pathlib import Path
-from urllib.parse import urljoin
 
-import aiohttp
-import requests
 from langchain.tools import BaseTool
+from langchain_core.messages import HumanMessage
+from langchain_openai.chat_models import ChatOpenAI
 from PIL import Image
 from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
+root = setup_root(".", pythonpath=True, dotenv=True)
+
 from config import config
 from utils import tool_exception_catch
-from utils.gpt4v import request_gpt4v
-
-root = setup_root(".")
 
 template = """"请简要描述一下图像的内容以及图像中的文本信息。"""
 
-
-def get_vl_result(image: str) -> str:
-    # 构造请求参数
-    params = {"image": image, "text": template}
-    # 发送POST请求
-    response = requests.post(
-        urljoin(config.vl_server_addr, "/vl"),
-        data=params,
-    )
-    # 获取响应结果
-    result = response.text
-    return result
-
-
-async def stream_get_vl_result(image: str):
-    params = {"image": image, "text": template}
-    url = urljoin(config.vl_server_addr, "/vl_stream")
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=params) as response:
-            # 使用iter_any方法逐块读取响应
-            async for chunk in response.content.iter_any():
-                yield chunk.decode("utf-8")
+vlm = ChatOpenAI(
+    model_name=config.vl_model_name,
+    openai_api_base=config.vl_server_addr,
+    openai_api_key=os.getenv("VLM_API_KEY"),
+    temperature=1.0,
+    streaming=False,
+)
 
 
 def load_tweet_content(image_name: str) -> str:
@@ -75,21 +57,44 @@ class ImageComprehendingTool(BaseTool):
 
         could be in English and Chinese.
         """
-        if config.vl_model_type == "gpt4v":
-            resp = request_gpt4v(root / ".temp" / image_name, template) + "\n"
-        else:
-            image_content = load_tweet_content(image_name)
-            resp = get_vl_result(image_content) + "\n"
-        return resp
+        img_base64 = load_tweet_content(image_name)
+        msg = vlm.invoke(
+            [
+                HumanMessage(
+                    content=[
+                        {"type": "text", "text": template},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"},
+                        },
+                    ]
+                )
+            ]
+        )
+        return msg.content
 
     @tool_exception_catch(name)
     async def _arun(self, image_name: str) -> str:
-        image_content = load_tweet_content(image_name)
-        res = ""
-        if config.vl_model_type == "gpt4v":
-            res = request_gpt4v(root / ".temp" / image_name, template) + "\n"
-        else:
-            async for token in stream_get_vl_result(image_content):
-                res = token
-                print("\r" + token, flush=True, end="")
-        return res + "\n"
+        img_base64 = load_tweet_content(image_name)
+        msg = await vlm.ainvoke(
+            [
+                HumanMessage(
+                    content=[
+                        {"type": "text", "text": template},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"},
+                        },
+                    ]
+                )
+            ]
+        )
+        return msg.content
+
+
+if __name__ == "__main__":
+    tool = ImageComprehendingTool()
+    # print(tool.invoke("1c3ff2e0.png"))
+    import asyncio
+
+    print(asyncio.run(tool.ainvoke("1c3ff2e0.png")))
