@@ -41,7 +41,7 @@ def get_summarizer_chain():
         prompt
         | ChatOpenAI(
             model_name=config.model_name,
-            temperature=0.0,
+            temperature=1.0,
             streaming=False,
             extra_body={
                 "guided_json": SummarizerScheme.schema_json(),

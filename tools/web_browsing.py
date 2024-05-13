@@ -31,7 +31,7 @@ parser = PydanticOutputParser(pydantic_object=SummaryScheme)
 prompt = PromptTemplate(template=SUMMARY_PROMPT, input_variables=["page_content"]).partial(
     format_instructions=parser.get_format_instructions()
 )
-llm = ChatOpenAI(model_name=config.model_name, temperature=0.0)
+llm = ChatOpenAI(model_name=config.model_name, temperature=1.0)
 
 summary_chain = prompt | llm | parser
 
