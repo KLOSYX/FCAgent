@@ -5,6 +5,7 @@ import importlib
 from io import BytesIO
 
 from langchain.tools import BaseTool
+from loguru import logger
 from pyrootutils import setup_root
 
 ROOT = setup_root(".")
@@ -64,7 +65,8 @@ def tool_exception_catch(tool_name: str = "tool"):
             async def wrapper_async(*args, **kwargs):
                 try:
                     return await func(*args, **kwargs)
-                except Exception:
+                except Exception as e:
+                    logger.error(f"Error in tool {tool_name}: {e}")
                     return err_message
 
             return wrapper_async
@@ -74,7 +76,8 @@ def tool_exception_catch(tool_name: str = "tool"):
             def wrapper_sync(*args, **kwargs):
                 try:
                     return func(*args, **kwargs)
-                except Exception:
+                except Exception as e:
+                    logger.error(f"Error in tool {tool_name}: {e}")
                     return err_message
 
             return wrapper_sync
