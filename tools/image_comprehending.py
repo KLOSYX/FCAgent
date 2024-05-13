@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
 from config import config
+from utils import tool_exception_catch
 from utils.gpt4v import request_gpt4v
 
 root = setup_root(".")
@@ -68,6 +69,7 @@ class ImageComprehendingTool(BaseTool):
     description = "Use this tool to obtain text descriptions of tweet image content"
     args_schema: type[ImageScheme] = ImageScheme
 
+    @tool_exception_catch(name)
     def _run(self, image_name: str) -> str:
         """use tweet summary as input.
 
@@ -80,6 +82,7 @@ class ImageComprehendingTool(BaseTool):
             resp = get_vl_result(image_content) + "\n"
         return resp
 
+    @tool_exception_catch(name)
     async def _arun(self, image_name: str) -> str:
         image_content = load_tweet_content(image_name)
         res = ""

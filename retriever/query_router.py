@@ -11,7 +11,7 @@ from langchain_openai.chat_models import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
 from config import config
-from utils import load_base_tools
+from utils import load_base_tools, tool_exception_catch
 from utils.pydantic import PydanticOutputParser
 
 RETRIEVER_MAP = {x.name: x for x in load_base_tools("retriever", ["QueryRouterTool"])}
@@ -144,10 +144,12 @@ class QueryRouterTool(BaseTool):
     description = "use this tool when you need to search any information."
     args_schema: type[BaseModel] = SearchInput
 
+    @tool_exception_catch(name)
     def _run(self, query: str) -> str:
         res = app.invoke({"query": query})
         return res["search_results"]
 
+    @tool_exception_catch(name)
     async def _arun(self, query: str) -> str:
         res = await app.ainvoke({"query": query})
         return res["search_results"]

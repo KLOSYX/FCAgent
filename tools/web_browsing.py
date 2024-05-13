@@ -11,6 +11,7 @@ from langchain_community.document_transformers import Html2TextTransformer
 from langchain_openai.chat_models import ChatOpenAI
 
 from config import config
+from utils import tool_exception_catch
 from utils.pydantic import PydanticOutputParser
 
 SUMMARY_PROMPT = """Given the content of the web page, you need to extract title and summary \
@@ -68,12 +69,10 @@ class WebBrowsingTool(BaseTool):
     def _run(self, urls: list[str]) -> str:
         raise NotImplementedError
 
+    @tool_exception_catch(name)
     async def _arun(self, urls: list[str]) -> str:
-        try:
-            web_content = await get_web_content_from_url(urls)
-            return "\n".join(map(str, web_content)) + "\n"
-        except Exception as e:
-            return "Failed to get web content: " + str(e)
+        web_content = await get_web_content_from_url(urls)
+        return "\n".join(map(str, web_content)) + "\n"
 
 
 if __name__ == "__main__":

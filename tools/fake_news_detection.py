@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
 from config import config
+from utils import tool_exception_catch
 
 root = setup_root(".")
 
@@ -54,6 +55,7 @@ class FakeNewsDetectionTool(BaseTool):
     )
     args_schema: type[FNDScheme] = FNDScheme
 
+    @tool_exception_catch(name)
     def _run(self, text: str, image_name: str) -> str:
         """use tweet summary as input.
 
@@ -62,6 +64,7 @@ class FakeNewsDetectionTool(BaseTool):
         image_content = load_image_content(image_name)
         return get_core_result(text=text, image=image_content)
 
+    @tool_exception_catch(name)
     async def _arun(self, text: str, image_name: str) -> str:
         """use tweet summary as input.
 
