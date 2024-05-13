@@ -16,9 +16,9 @@ class Config:
         "openai_tools", "shoggoth13_react_json", "shoggoth13_react_json_cn"
     ] = "shoggoth13_react_json_cn"
     core_server_addr: str = "http://localhost:8001"
-    vl_model_type: Literal["local", "gpt4v"] = "gpt4v"
-    vl_server_addr: str = "http://localhost:8002"
+    vl_server_addr: str = "http://localhost:8002/v1"
     model_name: str = "deepseek-chat"
+    vl_model_name: str = "Qwen-VL-Chat"
     search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
     rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
