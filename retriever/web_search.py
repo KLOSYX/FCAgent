@@ -19,6 +19,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai.chat_models import ChatOpenAI
 
 from config import config
+from utils import tool_exception_catch
 from utils.pydantic import PydanticOutputParser
 
 SEARCH_PROMPT = """Given the query and search results, you need to extract key information and information sources \
@@ -98,26 +99,22 @@ class WebSearchTool(BaseTool):
     description = "use this tool when you need to search web page."
     args_schema: type[BaseModel] = WebSearchInput
 
+    @tool_exception_catch(name)
     def _run(self, query: str) -> str:
-        try:
-            search_results: str = get_web_searcher().run(query)
-            if config.rewrite_search_results:
-                res = format_search_results_chain.invoke(
-                    {"query": query, "search_results": search_results}
-                )
-                return format_search_results(res)
-            return search_results
-        except Exception as e:
-            return "Fail to run web search: " + str(e)
+        search_results: str = get_web_searcher().run(query)
+        if config.rewrite_search_results:
+            res = format_search_results_chain.invoke(
+                {"query": query, "search_results": search_results}
+            )
+            return format_search_results(res)
+        return search_results
 
+    @tool_exception_catch(name)
     async def _arun(self, query: str) -> str:
-        try:
-            search_results: str = get_web_searcher().run(query)
-            if config.rewrite_search_results:
-                res = await format_search_results_chain.ainvoke(
-                    {"query": query, "search_results": search_results}
-                )
-                return format_search_results(res)
-            return search_results
-        except Exception as e:
-            return "Fail to run web search: " + str(e)
+        search_results: str = get_web_searcher().run(query)
+        if config.rewrite_search_results:
+            res = await format_search_results_chain.ainvoke(
+                {"query": query, "search_results": search_results}
+            )
+            return format_search_results(res)
+        return search_results

@@ -7,6 +7,7 @@ from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from config import config
+from utils import tool_exception_catch
 
 
 def get_wiki_result(key_words: str) -> list[str]:
@@ -31,6 +32,7 @@ class WikipediaTool(BaseTool):
     note that knowledge may be out of date, but it is certainly correct."
     args_schema = WikipediaInput
 
+    @tool_exception_catch(name)
     def _run(self, query: str) -> str:
         """use string 'query' as input.
 
@@ -40,6 +42,7 @@ class WikipediaTool(BaseTool):
             "\n".join(f"{i}. {s}" for i, s in enumerate(get_wiki_result(key_words=query))) + "\n"
         )
 
+    @tool_exception_catch(name)
     async def _arun(self, query: str) -> str:
         """use string 'query' as input.
 

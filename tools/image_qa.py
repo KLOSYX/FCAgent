@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from pyrootutils import setup_root
 
 from config import config
+from utils import tool_exception_catch
 from utils.gpt4v import request_gpt4v
 
 root = setup_root(".")
@@ -67,6 +68,7 @@ class ImageQaTool(BaseTool):
     description = "Use this tool to ask any question about the tweet image content"
     args_schema: type[ImageQaScheme] = ImageQaScheme
 
+    @tool_exception_catch(name)
     def _run(self, question: str, image_name: str) -> str:
         if config.vl_model_type == "gpt4v":
             resp = request_gpt4v(root / ".temp" / image_name, question) + "\n"
@@ -75,6 +77,7 @@ class ImageQaTool(BaseTool):
             resp = get_vl_result(image_content, question) + "\n"
         return resp
 
+    @tool_exception_catch(name)
     async def _arun(self, question: str, image_name: str) -> str:
         image_content = load_tweet_content(image_name)
         res = ""

@@ -6,6 +6,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 
 from config import config
+from utils import tool_exception_catch
 from utils.pydantic import PydanticOutputParser
 
 template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want \
@@ -49,9 +50,11 @@ class AskLlmTool(BaseTool):
     )
     args_schema: type[BaseModel] = AskLlmInput
 
+    @tool_exception_catch(name)
     def _run(self, query: str):
         return get_closed_knowledge_chain().invoke({"text_input": query}).knowledge
 
+    @tool_exception_catch(name)
     async def _arun(self, query: str):
         res = await get_closed_knowledge_chain().ainvoke({"text_input": query})
         return res.knowledge

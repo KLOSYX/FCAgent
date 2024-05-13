@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import hashlib
 import importlib
 from io import BytesIO
@@ -48,3 +50,33 @@ def generate_filename_from_image(image):
     hasher.update(img_byte_arr)
     hash_value = hasher.hexdigest()[:8]
     return str(hash_value)
+
+
+def tool_exception_catch(tool_name: str = "tool"):
+    """Decorator to catch exceptions in both async and sync tool functions."""
+    err_message: str = f"Failed to invoke tool: `{tool_name}`."
+
+    def decorator(func):
+        # 检查被装饰的函数是否是异步函数
+        if asyncio.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def wrapper_async(*args, **kwargs):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception:
+                    return err_message
+
+            return wrapper_async
+        else:
+
+            @functools.wraps(func)
+            def wrapper_sync(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception:
+                    return err_message
+
+            return wrapper_sync
+
+    return decorator
