@@ -19,9 +19,9 @@ def clean_thought(text: str, thought_pattern: str) -> str:
 
 def extract_tool_use(input_text: str) -> tuple[str, str, str]:
     # pattern = r"\s*Thought:(.*?)Action:(.*?)Action Input:(.*?)(?:\n|$)"
-    pattern = r"\s*(.*?)✿FUNCTION✿:(.*?)✿ARGS✿:(.*?)(?:\n|$)"
+    pattern = r"\s*✿THOUGHT✿:(.*?)✿FUNCTION✿:(.*?)✿ARGS✿:(.*?)(?:\n|$)"
 
-    input_text = input_text.replace("\n", "")
+    # input_text = input_text.replace("\n", "")
     match = re.search(pattern, input_text, re.DOTALL)
     if not match:
         raise ValueError(f"Could not extract tool use from input text: {input_text}")
