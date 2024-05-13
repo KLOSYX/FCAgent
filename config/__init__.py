@@ -18,7 +18,7 @@ class Config:
     core_server_addr: str = "http://localhost:8001"
     vl_model_type: Literal["local", "gpt4v"] = "gpt4v"
     vl_server_addr: str = "http://localhost:8002"
-    model_name: str = "vllm"
+    model_name: str = "deepseek-chat"
     search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
     rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
