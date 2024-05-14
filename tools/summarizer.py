@@ -22,8 +22,15 @@ class Item(TypedDict):
     url: str
 
 
+class Rank(Enum):
+    TRUE = "真实"
+    FALSE = "虚假"
+    MAYBE = "有待核实"
+    MIXED = "真假参半"
+
+
 class SummarizerScheme(BaseModel):
-    rank: Literal["真实", "虚假", "有待核实", "真假参半"] = Field(description="核查过程的结论")
+    rank: Rank = Field(description="核查过程的结论")
     procedure: str = Field(description="中文，核查过程的过程")
     reference: list[Item] = Field(description="权威可靠来源的参考资料列表，如没有参考资料，返回空列表")
 
@@ -43,11 +50,13 @@ def get_summarizer_chain():
             model_name=config.model_name,
             temperature=1.0,
             streaming=False,
-            extra_body={
-                "guided_json": SummarizerScheme.schema_json(),
-            }
-            if config.use_constrained_decoding
-            else None,  # just for vllm
+            extra_body=(
+                {
+                    "guided_json": SummarizerScheme.schema_json(),
+                }
+                if config.use_constrained_decoding
+                else None
+            ),  # just for vllm
         )
         | parser
     )

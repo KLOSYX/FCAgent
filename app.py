@@ -96,10 +96,10 @@ async def inference(
             yield format_markdown(partial_message)
         elif kind == "on_parser_end" and isinstance(event["data"].get("output"), SummarizerScheme):
             ended = True
-            result = event["data"].get("output")
+            result: SummarizerScheme = event["data"].get("output")
             partial_message += "\n\n---\n\n"
             partial_message += (
-                f"- 结论：{result.rank}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
+                f"- 结论：{result.rank.value}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
             )
             yield format_markdown(partial_message)
         elif not ended:
