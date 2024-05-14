@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import requests
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel, Field
 
 from config import config
 from utils import tool_exception_catch
