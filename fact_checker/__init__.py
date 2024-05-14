@@ -53,6 +53,8 @@ def get_fact_checker_agent(tools, ocr):
         img_path = ROOT / ".temp" / img_name
         ocr_res = ocr.ocr(str(img_path), cls=True)
         res_list = []
+        if not ocr_res or not ocr_res[0]:
+            return "No OCR result"
         for idx in range(len(ocr_res[0])):
             text, score = ocr_res[0][idx][-1]
             if score > 0.1:
