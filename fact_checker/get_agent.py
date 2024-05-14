@@ -37,3 +37,6 @@ def _get_agent(agent_name: str, llm, tools):
             | react_chat.ReActOutputParser()
         )
         return agent
+
+    else:
+        raise ValueError(f"Unknown agent: {agent_name}")
