@@ -21,7 +21,7 @@ vlm = ChatOpenAI(
     openai_api_base=config.vl_server_addr,
     openai_api_key=os.getenv("VLM_API_KEY"),
     temperature=1.0,
-    streaming=False,
+    streaming=True,
 )
 
 
@@ -71,7 +71,7 @@ class ImageQaTool(BaseTool):
     @tool_exception_catch(name)
     async def _arun(self, question: str, image_name: str) -> str:
         img_base64 = load_tweet_content(image_name)
-        msg = await vlm.ainvoke(
+        chunk_iterator = vlm.astream(
             [
                 HumanMessage(
                     content=[
@@ -84,7 +84,8 @@ class ImageQaTool(BaseTool):
                 )
             ]
         )
-        return msg.content
+        chunks = [chunk async for chunk in chunk_iterator]
+        return "".join(chunk.content for chunk in chunks)
 
 
 if __name__ == "__main__":

@@ -60,6 +60,8 @@ async def inference(
     agent = get_fact_checker_agent(all_tools, ocr)
     partial_message = ""
     ended = False
+    on_tool = False
+    current_tool_output = ""
     async for event in agent.astream_events(
         {
             "input": {
@@ -73,13 +75,20 @@ async def inference(
         if kind == "on_chat_model_stream":
             content = event["data"]["chunk"].content
             if content:
-                partial_message += content
-                yield format_markdown(partial_message)
+                if not on_tool:
+                    partial_message += content
+                    yield format_markdown(partial_message)
+                else:
+                    current_tool_output += content
+                    yield format_markdown(partial_message + "\n\n" + current_tool_output)
         elif kind == "on_tool_start":
+            on_tool = True
+            current_tool_output = ""
             content = f"\n\n> 调用工具：{event['name']}\t输入: {event['data'].get('input')}\n\n"
             partial_message += content
             yield format_markdown(partial_message)
         elif kind == "on_tool_end":
+            on_tool = False
             tool_output = event["data"].get("output")
             if tool_output:
                 tool_output = tool_output.replace("\n", "\t")
