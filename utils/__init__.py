@@ -66,7 +66,7 @@ def tool_exception_catch(tool_name: str = "tool"):
                 try:
                     return await func(*args, **kwargs)
                 except Exception as e:
-                    logger.error(f"Error in tool {tool_name}: {e}")
+                    logger.exception(f"Error in tool {tool_name}")
                     return err_message
 
             return wrapper_async
@@ -77,7 +77,7 @@ def tool_exception_catch(tool_name: str = "tool"):
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    logger.error(f"Error in tool {tool_name}: {e}")
+                    logger.exception(f"Error in tool {tool_name}")
                     return err_message
 
             return wrapper_sync
