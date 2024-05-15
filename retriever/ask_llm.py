@@ -7,38 +7,36 @@ from langchain_openai import ChatOpenAI
 
 from config import config
 from utils import tool_exception_catch
-from utils.pydantic import PydanticOutputParser
 
-template = """Please now play the role of an encyclopaedic knowledge base, I will provide a social media tweet, I want \
-to verify the authenticity of the tweet and you are responsible for providing knowledge that can support/refute the \
-content of the tweet. The knowledge must be true and reliable, so if you don't have the relevant knowledge, please \
-don't provide it.
-{format_instructions}
+template = """Assuming you are Wikipedia, given the context and question, you need to search for all relevant \
+knowledge related to the question. Note: You only need to output reliable knowledge without any explanation \
+or explanation.
+
 ---
-Question: {text_input}"""
 
+Context: {context}
 
-class Answer(BaseModel):
-    knowledge: str = Field(description="Knowledge string.")
+Question: {question}"""
 
-
-# Set up a parser
-parser = PydanticOutputParser(pydantic_object=Answer)
 
 prompt = PromptTemplate(
     template=template,
-    input_variables=["text_input"],
-).partial(format_instructions=parser.get_format_instructions())
-llm = ChatOpenAI(model_name=config.model_name, temperature=0.0)
+    input_variables=["context", "question"],
+)
+llm = ChatOpenAI(model_name=config.model_name, streaming=True, temperature=1.0)
 
 
 def get_closed_knowledge_chain():
-    knowledge_chain = prompt | llm | parser
+    knowledge_chain = prompt | llm
     return knowledge_chain
 
 
 class AskLlmInput(BaseModel):
-    query: str = Field(description="The question to ask. Could be any language.")
+    context: str = Field(
+        description="The context to make question more specific. Could be any language.",
+        default="No context provided.",
+    )
+    question: str = Field(description="The question to ask. Could be any language.")
 
 
 class AskLlmTool(BaseTool):
@@ -51,32 +49,21 @@ class AskLlmTool(BaseTool):
     args_schema: type[BaseModel] = AskLlmInput
 
     @tool_exception_catch(name)
-    def _run(self, query: str):
-        return get_closed_knowledge_chain().invoke({"text_input": query}).knowledge
+    def _run(self, question: str, context: str = "No context provided."):
+        return (
+            get_closed_knowledge_chain().invoke({"context": context, "question": question}).content
+        )
 
     @tool_exception_catch(name)
-    async def _arun(self, query: str):
-        res = await get_closed_knowledge_chain().ainvoke({"text_input": query})
-        return res.knowledge
-
-
-if __name__ == "__main__":
-    from pyrootutils import setup_root
-
-    root = setup_root(".", dotenv=True)
-
-    print(
-        prompt.invoke(
-            {
-                "text_input": "NASA has just discovered a new planet in the Andromeda galaxy",
-            }
-        ).text,
-    )
-    chain = get_closed_knowledge_chain()
-    print(
-        chain.invoke(
-            {
-                "text_input": "NASA has just discovered a new planet in the Andromeda galaxy",
-            }
-        ).knowledges,
-    )
+    async def _arun(self, question: str, context: str = "No context provided."):
+        chain = get_closed_knowledge_chain()
+        chunks = [
+            chunk
+            async for chunk in chain.astream(
+                {
+                    "context": context,
+                    "question": question,
+                }
+            )
+        ]
+        return "".join([chunk.content for chunk in chunks])
