@@ -61,7 +61,7 @@ async def inference(
     partial_message = ""
     ended = False
     on_tool = False
-    current_tool_output = ""
+    current_tool_streaming_out = ""
     async for event in agent.astream_events(
         {
             "input": {
@@ -79,16 +79,16 @@ async def inference(
                     partial_message += content
                     yield format_markdown(partial_message)
                 else:
-                    current_tool_output += content
-                    yield format_markdown(partial_message + "\n\n" + current_tool_output)
+                    current_tool_streaming_out += content
+                    yield format_markdown(partial_message + "\n\n" + current_tool_streaming_out)
         elif kind == "on_tool_start":
             on_tool = True
-            current_tool_output = ""
             content = f"\n\n> 调用工具：{event['name']}\t输入: {event['data'].get('input')}\n\n"
             partial_message += content
             yield format_markdown(partial_message)
         elif kind == "on_tool_end":
             on_tool = False
+            current_tool_streaming_out = ""
             tool_output = event["data"].get("output")
             if tool_output:
                 tool_output = tool_output.replace("\n", "\t")
@@ -102,7 +102,7 @@ async def inference(
                 f"- 结论：{result.rank.value}\n- 过程：{result.procedure}\n- 参考：{result.reference}\n"
             )
             yield format_markdown(partial_message)
-        elif not ended:
+        elif not ended and not current_tool_streaming_out:
             yield format_markdown(partial_message + "\n\nPlease wait...")
 
 
