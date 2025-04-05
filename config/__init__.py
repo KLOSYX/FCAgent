@@ -16,14 +16,14 @@ class Config:
         "openai_tools", "shoggoth13_react_json", "shoggoth13_react_json_cn"
     ] = "shoggoth13_react_json_cn"
     core_server_addr: str = "http://localhost:8001"
-    vl_server_addr: str = "http://localhost:8002/v1"
-    model_name: str = "deepseek-chat"
-    vl_model_name: str = "Qwen-VL-Chat"
-    search_engine: Literal["bing", "google", "duckduckgo"] = "bing"
+    vl_server_addr: str = "http://localhost:11434/v1"
+    model_name: str = "qwen2.5:latest"
+    vl_model_name: str = "minicpm-v:latest"
+    search_engine: Literal["bing", "google", "duckduckgo"] = "google"
     rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
-    use_ocr: bool = True
-    use_constrained_decoding: bool = True
+    use_ocr: bool = False
+    use_constrained_decoding: bool = False
 
 
 config = Config()

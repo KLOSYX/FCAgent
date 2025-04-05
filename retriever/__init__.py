@@ -7,4 +7,6 @@ __all__ = [
 ]
 
 
-RETRIEVER_LIST = load_base_tools("retriever")
+RETRIEVER_LIST = load_base_tools(
+    "retriever", except_classes=["WikipediaTool", "QueryRouterTool"]
+)
