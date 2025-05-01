@@ -1,0 +1,25 @@
+[project]
+name = "fcagent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "agents-deconstructed>=0.0.2",
+    "bs4==0.0.2",
+    "duckduckgo-search>=5.1.0",
+    "google-api-python-client>=2.100.0",
+    "gradio>=4.19.2",
+    "html2text>=2025.4.15",
+    "langchain==0.1.12",
+    "langchain-openai==0.0.8",
+    "langgraph==0.0.28",
+    "loguru==0.7.2",
+    "paddleocr==2.7.2",
+    "paddlepaddle==2.6.1",
+    "pillow==10.2.0",
+    "pydantic==2.5.2",
+    "pyrootutils==1.0.4",
+    "requests==2.31.0",
+    "setuptools>=80.1.0",
+]
