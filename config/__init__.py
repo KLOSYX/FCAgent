@@ -22,8 +22,8 @@ class Config:
     search_engine: Literal["bing", "google", "duckduckgo"] = "google"
     rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
-    use_ocr: bool = True
-    use_constrained_decoding: bool = True
+    use_ocr: bool = False
+    use_constrained_decoding: bool = False
 
 
 config = Config()
