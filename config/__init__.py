@@ -17,8 +17,8 @@ class Config:
     ] = "shoggoth13_react_json_cn"
     # core_server_addr: str = "http://localhost:8001"
     vl_server_addr: str = "http://127.0.0.1:11434/v1"
-    model_name: str = "qwen3:latest"
-    vl_model_name: str = "qwen2.5-vl"
+    model_name: str = "qwen3-8b"
+    vl_model_name: str = "gemma-3-4b-it-qat"
     search_engine: Literal["bing", "google", "duckduckgo"] = "google"
     rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
