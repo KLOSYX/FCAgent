@@ -26,7 +26,6 @@ Configure the system by setting the appropriate values in the `config/__init__.p
 
 ```python
 # Example configuration
-core_server_addr = "http://localhost:8000"
 vl_server_addr = "http://localhost:8001"
 model_name = "gpt-4"
 ```
