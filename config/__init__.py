@@ -15,14 +15,14 @@ class Config:
     agent_type: Literal[
         "openai_tools", "shoggoth13_react_json", "shoggoth13_react_json_cn"
     ] = "shoggoth13_react_json_cn"
-    core_server_addr: str = "http://localhost:8001"
-    vl_server_addr: str = "http://localhost:8002/v1"
+    # core_server_addr: str = "http://localhost:8001"
+    vl_server_addr: str = "http://127.0.0.1:11434/v1"
     model_name: str = "qwen3:latest"
-    vl_model_name: str = "Qwen-VL-Chat"
+    vl_model_name: str = "qwen2.5-vl"
     search_engine: Literal["bing", "google", "duckduckgo"] = "google"
     rewrite_search_results: bool = False
     web_scrapy_max_splits: int = 3
-    use_ocr: bool = True
+    use_ocr: bool = False
     use_constrained_decoding: bool = True
 
 
